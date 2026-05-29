@@ -1,0 +1,91 @@
+import type { AuthUser } from '../common/types/auth-user';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
+import { RecoverAccessDto } from './dto/recover-access.dto';
+import { RegisterCandidateDto } from './dto/register-candidate.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyCodeDto } from './dto/verify-code.dto';
+export declare class AuthController {
+    private readonly authService;
+    constructor(authService: AuthService);
+    registerCandidate(dto: RegisterCandidateDto): Promise<{
+        accessToken: string;
+        user: {
+            id: string;
+            email: string | null;
+            phone: string | null;
+            role: string;
+            candidateId: string | null;
+            companyId: string | null;
+        };
+    }>;
+    login(dto: LoginDto): Promise<{
+        accessToken: string;
+        user: {
+            id: string;
+            email: string | null;
+            phone: string | null;
+            role: string;
+            candidateId: string | null;
+            companyId: string | null;
+        };
+    }>;
+    recoverAccess(dto: RecoverAccessDto): Promise<{
+        status: string;
+        message: string;
+        recoveryId?: undefined;
+        expiresIn?: undefined;
+        deliveryMethod?: undefined;
+    } | {
+        recoveryId: string;
+        expiresIn: number;
+        deliveryMethod: string;
+        status?: undefined;
+        message?: undefined;
+    }>;
+    verifyCode(dto: VerifyCodeDto): Promise<{
+        resetToken: string;
+        verified: boolean;
+    }>;
+    resetPassword(dto: ResetPasswordDto): Promise<{
+        status: string;
+        message: string;
+    }>;
+    me(user: AuthUser): Promise<({
+        candidateProfile: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.UserStatus;
+            fullName: string;
+            city: string | null;
+            country: string | null;
+            desiredJobType: string | null;
+            availability: string | null;
+            salaryExpectationMin: number | null;
+            salaryExpectationMax: number | null;
+            experienceLevel: string | null;
+            educationLevel: string | null;
+            profileCompletion: number;
+            userId: string;
+        } | null;
+        companyUsers: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            role: import(".prisma/client").$Enums.CompanyRole;
+            companyId: string;
+            userId: string;
+        }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string | null;
+        phone: string | null;
+        passwordHash: string | null;
+        role: import(".prisma/client").$Enums.UserRole;
+        status: import(".prisma/client").$Enums.UserStatus;
+    }) | null>;
+}

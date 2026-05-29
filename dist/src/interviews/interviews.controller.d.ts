@@ -1,0 +1,455 @@
+import type { AuthUser } from '../common/types/auth-user';
+import { CreateInterviewDto } from './dto/create-interview.dto';
+import { UpdateInterviewStatusDto } from './dto/update-interview-status.dto';
+import { RescheduleInterviewDto } from './dto/reschedule-interview.dto';
+import { InterviewsService } from './interviews.service';
+export declare class InterviewsController {
+    private readonly interviewsService;
+    constructor(interviewsService: InterviewsService);
+    create(user: AuthUser, dto: CreateInterviewDto): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    listForCandidate(user: AuthUser): import(".prisma/client").Prisma.PrismaPromise<({
+        company: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string | null;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.CompanyStatus;
+            city: string | null;
+            country: string | null;
+            slug: string;
+            legalName: string | null;
+            address: string | null;
+            website: string | null;
+            logoUrl: string | null;
+            planId: string | null;
+        };
+        application: {
+            job: {
+                id: string;
+                currency: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import(".prisma/client").$Enums.JobStatus;
+                city: string | null;
+                country: string | null;
+                companyId: string;
+                title: string;
+                description: string | null;
+                requirements: string[];
+                benefits: string[];
+                salaryMin: number | null;
+                salaryMax: number | null;
+                employmentType: string | null;
+                modality: string | null;
+                categoryId: string | null;
+            };
+        } & {
+            id: string;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ApplicationStatus;
+            appliedAt: Date;
+            jobId: string;
+            candidateId: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    })[]>;
+    getById(id: string, user: AuthUser): Promise<{
+        candidate: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.UserStatus;
+            fullName: string;
+            city: string | null;
+            country: string | null;
+            desiredJobType: string | null;
+            availability: string | null;
+            salaryExpectationMin: number | null;
+            salaryExpectationMax: number | null;
+            experienceLevel: string | null;
+            educationLevel: string | null;
+            profileCompletion: number;
+            userId: string;
+        };
+        company: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string | null;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.CompanyStatus;
+            city: string | null;
+            country: string | null;
+            slug: string;
+            legalName: string | null;
+            address: string | null;
+            website: string | null;
+            logoUrl: string | null;
+            planId: string | null;
+        };
+        job: {
+            id: string;
+            currency: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.JobStatus;
+            city: string | null;
+            country: string | null;
+            companyId: string;
+            title: string;
+            description: string | null;
+            requirements: string[];
+            benefits: string[];
+            salaryMin: number | null;
+            salaryMax: number | null;
+            employmentType: string | null;
+            modality: string | null;
+            categoryId: string | null;
+        };
+        application: {
+            job: {
+                company: {
+                    id: string;
+                    name: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    email: string | null;
+                    phone: string | null;
+                    status: import(".prisma/client").$Enums.CompanyStatus;
+                    city: string | null;
+                    country: string | null;
+                    slug: string;
+                    legalName: string | null;
+                    address: string | null;
+                    website: string | null;
+                    logoUrl: string | null;
+                    planId: string | null;
+                };
+            } & {
+                id: string;
+                currency: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import(".prisma/client").$Enums.JobStatus;
+                city: string | null;
+                country: string | null;
+                companyId: string;
+                title: string;
+                description: string | null;
+                requirements: string[];
+                benefits: string[];
+                salaryMin: number | null;
+                salaryMax: number | null;
+                employmentType: string | null;
+                modality: string | null;
+                categoryId: string | null;
+            };
+        } & {
+            id: string;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ApplicationStatus;
+            appliedAt: Date;
+            jobId: string;
+            candidateId: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    confirm(id: string, user: AuthUser): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    requestReschedule(id: string, dto: RescheduleInterviewDto, user: AuthUser): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    listForCompany(user: AuthUser): never[] | import(".prisma/client").Prisma.PrismaPromise<({
+        candidate: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.UserStatus;
+            fullName: string;
+            city: string | null;
+            country: string | null;
+            desiredJobType: string | null;
+            availability: string | null;
+            salaryExpectationMin: number | null;
+            salaryExpectationMax: number | null;
+            experienceLevel: string | null;
+            educationLevel: string | null;
+            profileCompletion: number;
+            userId: string;
+        };
+        company: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            email: string | null;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.CompanyStatus;
+            city: string | null;
+            country: string | null;
+            slug: string;
+            legalName: string | null;
+            address: string | null;
+            website: string | null;
+            logoUrl: string | null;
+            planId: string | null;
+        };
+        application: {
+            id: string;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ApplicationStatus;
+            appliedAt: Date;
+            jobId: string;
+            candidateId: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    })[]> | import(".prisma/client").Prisma.PrismaPromise<({
+        candidate: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.UserStatus;
+            fullName: string;
+            city: string | null;
+            country: string | null;
+            desiredJobType: string | null;
+            availability: string | null;
+            salaryExpectationMin: number | null;
+            salaryExpectationMax: number | null;
+            experienceLevel: string | null;
+            educationLevel: string | null;
+            profileCompletion: number;
+            userId: string;
+        };
+        application: {
+            job: {
+                id: string;
+                currency: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import(".prisma/client").$Enums.JobStatus;
+                city: string | null;
+                country: string | null;
+                companyId: string;
+                title: string;
+                description: string | null;
+                requirements: string[];
+                benefits: string[];
+                salaryMin: number | null;
+                salaryMax: number | null;
+                employmentType: string | null;
+                modality: string | null;
+                categoryId: string | null;
+            };
+        } & {
+            id: string;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ApplicationStatus;
+            appliedAt: Date;
+            jobId: string;
+            candidateId: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    })[]>;
+    updateStatus(id: string, dto: UpdateInterviewStatusDto, user: AuthUser): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    reschedule(id: string, dto: RescheduleInterviewDto, user: AuthUser): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    getSummary(user: AuthUser): Promise<{
+        total: {
+            value: number;
+            trend: number;
+        };
+        pending: {
+            value: number;
+        };
+        confirmed: {
+            value: number;
+        };
+        rescheduled: {
+            value: number;
+        };
+        completed: {
+            value: number;
+        };
+    }>;
+    update(id: string, user: AuthUser, data: {
+        date?: string;
+        modality?: string;
+        location?: string;
+        meetingUrl?: string;
+        notesForCandidate?: string;
+    }): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+    sendReminder(id: string, user: AuthUser): Promise<{
+        sent: boolean;
+        interviewId: string;
+        candidateId: string;
+    }>;
+    recordResult(id: string, user: AuthUser, data: {
+        result: string;
+        notes?: string;
+        moveApplicationStatus?: string;
+    }): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    }>;
+}
