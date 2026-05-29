@@ -279,8 +279,8 @@ export declare class ApplicationsController {
             id: string;
             createdAt: Date;
             applicationId: string;
-            authorUserId: string;
             note: string;
+            authorUserId: string;
         }[];
     } & {
         id: string;
@@ -302,7 +302,7 @@ export declare class ApplicationsController {
         id: string;
         createdAt: Date;
         applicationId: string;
-        authorUserId: string;
         note: string;
+        authorUserId: string;
     }>;
 }

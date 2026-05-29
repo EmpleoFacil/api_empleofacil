@@ -183,8 +183,8 @@ export declare class ApplicationsService {
             id: string;
             createdAt: Date;
             applicationId: string;
-            authorUserId: string;
             note: string;
+            authorUserId: string;
         }[];
     } & {
         id: string;
@@ -337,8 +337,8 @@ export declare class ApplicationsService {
         id: string;
         createdAt: Date;
         applicationId: string;
-        authorUserId: string;
         note: string;
+        authorUserId: string;
     }>;
     exportForCompany(user: AuthUser, jobId?: string): Promise<({
         candidate: {
