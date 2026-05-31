@@ -11,9 +11,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadDocumentDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 class UploadDocumentDto {
     type;
-    fileUrl;
+    replace;
 }
 exports.UploadDocumentDto = UploadDocumentDto;
 __decorate([
@@ -23,7 +24,8 @@ __decorate([
 ], UploadDocumentDto.prototype, "type", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UploadDocumentDto.prototype, "fileUrl", void 0);
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UploadDocumentDto.prototype, "replace", void 0);
 //# sourceMappingURL=upload-document.dto.js.map

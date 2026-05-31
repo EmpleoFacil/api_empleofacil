@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DocumentsModule = void 0;
 const common_1 = require("@nestjs/common");
+const supabase_module_1 = require("../supabase/supabase.module");
 const documents_controller_1 = require("./documents.controller");
 const documents_service_1 = require("./documents.service");
 let DocumentsModule = class DocumentsModule {
@@ -15,6 +16,7 @@ let DocumentsModule = class DocumentsModule {
 exports.DocumentsModule = DocumentsModule;
 exports.DocumentsModule = DocumentsModule = __decorate([
     (0, common_1.Module)({
+        imports: [supabase_module_1.SupabaseModule],
         controllers: [documents_controller_1.DocumentsController],
         providers: [documents_service_1.DocumentsService],
     })

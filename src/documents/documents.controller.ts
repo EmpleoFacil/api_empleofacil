@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -23,8 +24,14 @@ export class DocumentsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('upload')
   @Roles('candidate')
-  upload(@CurrentUser() user: AuthUser, @Body() dto: UploadDocumentDto) {
-    return this.documentsService.upload(user, dto);
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  upload(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UploadDocumentDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.documentsService.upload(user, dto, file);
   }
 
   @ApiBearerAuth()

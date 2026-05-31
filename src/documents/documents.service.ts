@@ -1,27 +1,52 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
+import { extname } from 'path';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class DocumentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: SupabaseStorageService,
+  ) {}
 
   getDocumentTypes() {
     return this.prisma.documentType.findMany();
   }
 
-  async upload(user: AuthUser, dto: UploadDocumentDto) {
+  async upload(user: AuthUser, dto: UploadDocumentDto, file?: Express.Multer.File) {
     if (!user.candidateId) {
       throw new ForbiddenException('Usuario no es candidato.');
+    }
+
+    let fileUrl: string | null = null;
+
+    if (file) {
+      const ext = extname(file.originalname);
+      const fileName = `${randomUUID()}${ext}`;
+      fileUrl = await this.storage.upload(file, fileName, user.candidateId);
+
+      if (dto.replace) {
+        const existing = await this.prisma.candidateDocument.findFirst({
+          where: { candidateId: user.candidateId, type: dto.type },
+          orderBy: { uploadedAt: 'desc' },
+        });
+
+        if (existing) {
+          await this.prisma.candidateDocument.delete({ where: { id: existing.id } });
+        }
+      }
     }
 
     return this.prisma.candidateDocument.create({
       data: {
         candidateId: user.candidateId,
         type: dto.type,
-        fileUrl: dto.fileUrl,
+        fileUrl,
         status: 'uploaded',
         uploadedAt: new Date(),
       },

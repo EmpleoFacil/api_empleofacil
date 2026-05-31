@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UploadDocumentDto {
   @IsString()
@@ -6,6 +7,7 @@ export class UploadDocumentDto {
   type: string;
 
   @IsOptional()
-  @IsString()
-  fileUrl?: string;
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  replace?: boolean;
 }

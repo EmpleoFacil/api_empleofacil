@@ -10,7 +10,7 @@ export declare class DocumentsController {
         label: string;
         isRequired: boolean;
     }[]>;
-    upload(user: AuthUser, dto: UploadDocumentDto): Promise<{
+    upload(user: AuthUser, dto: UploadDocumentDto, file: Express.Multer.File): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;

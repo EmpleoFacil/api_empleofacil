@@ -12,23 +12,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DocumentsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const supabase_storage_service_1 = require("../supabase/supabase-storage.service");
+const path_1 = require("path");
+const crypto_1 = require("crypto");
 let DocumentsService = class DocumentsService {
     prisma;
-    constructor(prisma) {
+    storage;
+    constructor(prisma, storage) {
         this.prisma = prisma;
+        this.storage = storage;
     }
     getDocumentTypes() {
         return this.prisma.documentType.findMany();
     }
-    async upload(user, dto) {
+    async upload(user, dto, file) {
         if (!user.candidateId) {
             throw new common_1.ForbiddenException('Usuario no es candidato.');
+        }
+        let fileUrl = null;
+        if (file) {
+            const ext = (0, path_1.extname)(file.originalname);
+            const fileName = `${(0, crypto_1.randomUUID)()}${ext}`;
+            fileUrl = await this.storage.upload(file, fileName, user.candidateId);
+            if (dto.replace) {
+                const existing = await this.prisma.candidateDocument.findFirst({
+                    where: { candidateId: user.candidateId, type: dto.type },
+                    orderBy: { uploadedAt: 'desc' },
+                });
+                if (existing) {
+                    await this.prisma.candidateDocument.delete({ where: { id: existing.id } });
+                }
+            }
         }
         return this.prisma.candidateDocument.create({
             data: {
                 candidateId: user.candidateId,
                 type: dto.type,
-                fileUrl: dto.fileUrl,
+                fileUrl,
                 status: 'uploaded',
                 uploadedAt: new Date(),
             },
@@ -70,6 +90,7 @@ let DocumentsService = class DocumentsService {
 exports.DocumentsService = DocumentsService;
 exports.DocumentsService = DocumentsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        supabase_storage_service_1.SupabaseStorageService])
 ], DocumentsService);
 //# sourceMappingURL=documents.service.js.map

@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DocumentsController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const swagger_1 = require("@nestjs/swagger");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
@@ -30,8 +31,8 @@ let DocumentsController = class DocumentsController {
     getDocumentTypes() {
         return this.documentsService.getDocumentTypes();
     }
-    upload(user, dto) {
-        return this.documentsService.upload(user, dto);
+    upload(user, dto, file) {
+        return this.documentsService.upload(user, dto, file);
     }
     listForCandidate(user) {
         return this.documentsService.listForCandidate(user);
@@ -58,10 +59,13 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Post)('upload'),
     (0, roles_decorator_1.Roles)('candidate'),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, upload_document_dto_1.UploadDocumentDto]),
+    __metadata("design:paramtypes", [Object, upload_document_dto_1.UploadDocumentDto, Object]),
     __metadata("design:returntype", void 0)
 ], DocumentsController.prototype, "upload", null);
 __decorate([

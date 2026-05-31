@@ -1,16 +1,18 @@
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
 export declare class DocumentsService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly storage;
+    constructor(prisma: PrismaService, storage: SupabaseStorageService);
     getDocumentTypes(): import(".prisma/client").Prisma.PrismaPromise<{
         id: string;
         label: string;
         isRequired: boolean;
     }[]>;
-    upload(user: AuthUser, dto: UploadDocumentDto): Promise<{
+    upload(user: AuthUser, dto: UploadDocumentDto, file?: Express.Multer.File): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
