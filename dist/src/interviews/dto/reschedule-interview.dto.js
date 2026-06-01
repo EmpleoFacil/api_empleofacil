@@ -15,6 +15,9 @@ class RescheduleInterviewDto {
     date;
     meetingUrl;
     location;
+    interviewerName;
+    contactPhone;
+    mapUrl;
     reason;
 }
 exports.RescheduleInterviewDto = RescheduleInterviewDto;
@@ -33,6 +36,21 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], RescheduleInterviewDto.prototype, "location", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RescheduleInterviewDto.prototype, "interviewerName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RescheduleInterviewDto.prototype, "contactPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RescheduleInterviewDto.prototype, "mapUrl", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

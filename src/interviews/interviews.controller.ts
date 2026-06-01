@@ -33,8 +33,25 @@ export class InterviewsController {
 
   @Get('company')
   @Roles('company_admin', 'super_admin')
-  listForCompany(@CurrentUser() user: AuthUser) {
-    return this.interviewsService.listForCompany(user);
+  listForCompany(
+    @CurrentUser() user: AuthUser,
+    @Query('status') status?: string,
+    @Query('jobId') jobId?: string,
+    @Query('search') search?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.interviewsService.listForCompanyPaginated(user, {
+      status,
+      jobId,
+      search,
+      dateFrom,
+      dateTo,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+    });
   }
 
   @Get('company/upcoming')

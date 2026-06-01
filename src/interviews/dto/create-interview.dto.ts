@@ -27,5 +27,17 @@ export class CreateInterviewDto {
 
   @IsOptional()
   @IsString()
+  interviewerName?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  mapUrl?: string;
+
+  @IsOptional()
+  @IsString()
   notesForCandidate?: string;
 }

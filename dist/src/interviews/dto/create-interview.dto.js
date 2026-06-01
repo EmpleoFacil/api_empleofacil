@@ -18,6 +18,9 @@ class CreateInterviewDto {
     location;
     meetingUrl;
     status;
+    interviewerName;
+    contactPhone;
+    mapUrl;
     notesForCandidate;
 }
 exports.CreateInterviewDto = CreateInterviewDto;
@@ -51,6 +54,21 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateInterviewDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateInterviewDto.prototype, "interviewerName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateInterviewDto.prototype, "contactPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateInterviewDto.prototype, "mapUrl", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

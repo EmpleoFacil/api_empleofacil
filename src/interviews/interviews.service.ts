@@ -34,6 +34,9 @@ export class InterviewsService {
         modality: dto.type,
         location: dto.location,
         meetingUrl: dto.meetingUrl,
+        interviewerName: dto.interviewerName,
+        contactPhone: dto.contactPhone,
+        mapUrl: dto.mapUrl,
         jobId: application.jobId,
         status: (dto.status ?? 'scheduled') as any,
         notesForCandidate: dto.notesForCandidate,
@@ -195,6 +198,9 @@ export class InterviewsService {
         status: 'rescheduled' as any,
         meetingUrl: dto.meetingUrl ?? interview.meetingUrl,
         location: dto.location ?? interview.location,
+        ...(dto.interviewerName !== undefined && { interviewerName: dto.interviewerName }),
+        ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
+        ...(dto.mapUrl !== undefined && { mapUrl: dto.mapUrl }),
       },
     });
   }
@@ -255,7 +261,7 @@ export class InterviewsService {
     });
   }
 
-  async update(id: string, user: AuthUser, data: { date?: string; modality?: string; location?: string; meetingUrl?: string; notesForCandidate?: string }) {
+  async update(id: string, user: AuthUser, data: { date?: string; modality?: string; location?: string; meetingUrl?: string; notesForCandidate?: string; interviewerName?: string; contactPhone?: string; mapUrl?: string }) {
     const interview = await this.prisma.interview.findUnique({ where: { id } });
     if (!interview) throw new NotFoundException('Entrevista no encontrada.');
     if (user.role === 'company_admin' && interview.companyId !== user.companyId) {
@@ -270,6 +276,9 @@ export class InterviewsService {
         ...(data.location && { location: data.location }),
         ...(data.meetingUrl && { meetingUrl: data.meetingUrl }),
         ...(data.notesForCandidate && { notesForCandidate: data.notesForCandidate }),
+        ...(data.interviewerName !== undefined && { interviewerName: data.interviewerName }),
+        ...(data.contactPhone !== undefined && { contactPhone: data.contactPhone }),
+        ...(data.mapUrl !== undefined && { mapUrl: data.mapUrl }),
       },
     });
   }

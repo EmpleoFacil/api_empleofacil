@@ -5,5 +5,8 @@ export declare class CreateInterviewDto {
     location?: string;
     meetingUrl?: string;
     status?: string;
+    interviewerName?: string;
+    contactPhone?: string;
+    mapUrl?: string;
     notesForCandidate?: string;
 }

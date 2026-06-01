@@ -15,5 +15,17 @@ export class RescheduleInterviewDto {
 
   @IsOptional()
   @IsString()
+  interviewerName?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  mapUrl?: string;
+
+  @IsOptional()
+  @IsString()
   reason?: string;
 }

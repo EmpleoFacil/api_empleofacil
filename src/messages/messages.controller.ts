@@ -43,8 +43,21 @@ export class MessagesController {
 
   @Get('company')
   @Roles('company_admin', 'super_admin')
-  listForCompany(@CurrentUser() user: AuthUser) {
-    return this.messagesService.listForCompany(user);
+  listForCompany(
+    @CurrentUser() user: AuthUser,
+    @Query('status') status?: string,
+    @Query('candidateId') candidateId?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.messagesService.listForCompanyPaginated(user, {
+      status,
+      candidateId,
+      search,
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+    });
   }
 
   @Get(':id')

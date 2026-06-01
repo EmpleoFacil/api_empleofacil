@@ -34,8 +34,16 @@ let InterviewsController = class InterviewsController {
     listForCandidate(user) {
         return this.interviewsService.listForCandidate(user);
     }
-    listForCompany(user) {
-        return this.interviewsService.listForCompany(user);
+    listForCompany(user, status, jobId, search, dateFrom, dateTo, page, limit) {
+        return this.interviewsService.listForCompanyPaginated(user, {
+            status,
+            jobId,
+            search,
+            dateFrom,
+            dateTo,
+            page: page ? parseInt(page) : 1,
+            limit: limit ? parseInt(limit) : 20,
+        });
     }
     getUpcoming(user, limit) {
         return this.interviewsService.getUpcoming(user, limit ? parseInt(limit) : 5);
@@ -90,8 +98,15 @@ __decorate([
     (0, common_1.Get)('company'),
     (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('status')),
+    __param(2, (0, common_1.Query)('jobId')),
+    __param(3, (0, common_1.Query)('search')),
+    __param(4, (0, common_1.Query)('dateFrom')),
+    __param(5, (0, common_1.Query)('dateTo')),
+    __param(6, (0, common_1.Query)('page')),
+    __param(7, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], InterviewsController.prototype, "listForCompany", null);
 __decorate([

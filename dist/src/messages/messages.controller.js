@@ -40,8 +40,14 @@ let MessagesController = class MessagesController {
     markAsRead(id, user) {
         return this.messagesService.markAsRead(id, user);
     }
-    listForCompany(user) {
-        return this.messagesService.listForCompany(user);
+    listForCompany(user, status, candidateId, search, page, limit) {
+        return this.messagesService.listForCompanyPaginated(user, {
+            status,
+            candidateId,
+            search,
+            page: page ? parseInt(page) : 1,
+            limit: limit ? parseInt(limit) : 20,
+        });
     }
     getById(id, user) {
         return this.messagesService.getById(id, user);
@@ -107,8 +113,13 @@ __decorate([
     (0, common_1.Get)('company'),
     (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('status')),
+    __param(2, (0, common_1.Query)('candidateId')),
+    __param(3, (0, common_1.Query)('search')),
+    __param(4, (0, common_1.Query)('page')),
+    __param(5, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], MessagesController.prototype, "listForCompany", null);
 __decorate([

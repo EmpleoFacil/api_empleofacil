@@ -38,6 +38,9 @@ let InterviewsService = class InterviewsService {
                 modality: dto.type,
                 location: dto.location,
                 meetingUrl: dto.meetingUrl,
+                interviewerName: dto.interviewerName,
+                contactPhone: dto.contactPhone,
+                mapUrl: dto.mapUrl,
                 jobId: application.jobId,
                 status: (dto.status ?? 'scheduled'),
                 notesForCandidate: dto.notesForCandidate,
@@ -170,6 +173,9 @@ let InterviewsService = class InterviewsService {
                 status: 'rescheduled',
                 meetingUrl: dto.meetingUrl ?? interview.meetingUrl,
                 location: dto.location ?? interview.location,
+                ...(dto.interviewerName !== undefined && { interviewerName: dto.interviewerName }),
+                ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
+                ...(dto.mapUrl !== undefined && { mapUrl: dto.mapUrl }),
             },
         });
     }
@@ -240,6 +246,9 @@ let InterviewsService = class InterviewsService {
                 ...(data.location && { location: data.location }),
                 ...(data.meetingUrl && { meetingUrl: data.meetingUrl }),
                 ...(data.notesForCandidate && { notesForCandidate: data.notesForCandidate }),
+                ...(data.interviewerName !== undefined && { interviewerName: data.interviewerName }),
+                ...(data.contactPhone !== undefined && { contactPhone: data.contactPhone }),
+                ...(data.mapUrl !== undefined && { mapUrl: data.mapUrl }),
             },
         });
     }

@@ -344,6 +344,9 @@ model Interview {
   modality          String
   location          String?
   meetingUrl        String?
+  interviewerName   String?
+  contactPhone      String?
+  mapUrl            String?
   status            InterviewStatus @default(scheduled)
   notesForCandidate String?
   responsibleUserId String?
