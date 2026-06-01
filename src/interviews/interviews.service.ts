@@ -132,6 +132,24 @@ export class InterviewsService {
     });
   }
 
+  getUpcoming(user: AuthUser, limit: number = 5) {
+    const where: Record<string, unknown> = {
+      date: { gte: new Date() },
+      status: { in: ['scheduled', 'confirmed'] },
+    };
+
+    if (user.role === 'company_admin' && user.companyId) {
+      where.companyId = user.companyId;
+    }
+
+    return this.prisma.interview.findMany({
+      where,
+      include: { candidate: true, application: { include: { job: true } } },
+      orderBy: { date: 'asc' },
+      take: limit,
+    });
+  }
+
   async updateStatus(id: string, dto: UpdateInterviewStatusDto, user: AuthUser) {
     const interview = await this.prisma.interview.findUnique({
       where: { id },

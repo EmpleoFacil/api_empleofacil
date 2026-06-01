@@ -118,6 +118,21 @@ let InterviewsService = class InterviewsService {
             orderBy: { date: 'asc' },
         });
     }
+    getUpcoming(user, limit = 5) {
+        const where = {
+            date: { gte: new Date() },
+            status: { in: ['scheduled', 'confirmed'] },
+        };
+        if (user.role === 'company_admin' && user.companyId) {
+            where.companyId = user.companyId;
+        }
+        return this.prisma.interview.findMany({
+            where,
+            include: { candidate: true, application: { include: { job: true } } },
+            orderBy: { date: 'asc' },
+            take: limit,
+        });
+    }
     async updateStatus(id, dto, user) {
         const interview = await this.prisma.interview.findUnique({
             where: { id },

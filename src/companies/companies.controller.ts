@@ -16,6 +16,8 @@ import { CompaniesService } from './companies.service';
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
+  // ========== Literal routes first (before :id) ==========
+
   @Get()
   @Roles('super_admin')
   list(@CurrentUser() user: AuthUser) {
@@ -26,28 +28,6 @@ export class CompaniesController {
   @Roles('company_admin')
   getPlanLimits(@CurrentUser() user: AuthUser) {
     return this.companiesService.getPlanLimits(user);
-  }
-
-  @Get(':id')
-  @Roles('super_admin', 'company_admin')
-  getById(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.companiesService.getById(id, user);
-  }
-
-  @Post()
-  @Roles('super_admin')
-  create(@Body() dto: CreateCompanyDto) {
-    return this.companiesService.create(dto);
-  }
-
-  @Patch(':id')
-  @Roles('super_admin', 'company_admin')
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateCompanyDto,
-    @CurrentUser() user: AuthUser,
-  ) {
-    return this.companiesService.update(id, dto, user);
   }
 
   @Get('me')
@@ -104,7 +84,7 @@ export class CompaniesController {
     return this.companiesService.updatePlan(user, planId);
   }
 
-  // ========== SA-04: Admin Company Management ==========
+  // ========== Admin literal routes ==========
 
   @Get('admin/list')
   @Roles('super_admin')
@@ -124,6 +104,30 @@ export class CompaniesController {
     return this.companiesService.adminGetSummary();
   }
 
+  // ========== Param routes ==========
+
+  @Get(':id')
+  @Roles('super_admin', 'company_admin')
+  getById(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.companiesService.getById(id, user);
+  }
+
+  @Post()
+  @Roles('super_admin')
+  create(@Body() dto: CreateCompanyDto) {
+    return this.companiesService.create(dto);
+  }
+
+  @Patch(':id')
+  @Roles('super_admin', 'company_admin')
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCompanyDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.companiesService.update(id, dto, user);
+  }
+
   @Patch('admin/:id/status')
   @Roles('super_admin')
   adminUpdateStatus(@Param('id') id: string, @Body('status') status: string) {
@@ -135,8 +139,6 @@ export class CompaniesController {
   adminDeleteCompany(@Param('id') id: string) {
     return this.companiesService.adminDeleteCompany(id);
   }
-
-  // ========== SA-05: Company Detail for Admin ==========
 
   @Get('admin/:id')
   @Roles('super_admin')

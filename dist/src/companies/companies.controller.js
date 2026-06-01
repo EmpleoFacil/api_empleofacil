@@ -33,15 +33,6 @@ let CompaniesController = class CompaniesController {
     getPlanLimits(user) {
         return this.companiesService.getPlanLimits(user);
     }
-    getById(id, user) {
-        return this.companiesService.getById(id, user);
-    }
-    create(dto) {
-        return this.companiesService.create(dto);
-    }
-    update(id, dto, user) {
-        return this.companiesService.update(id, dto, user);
-    }
     getMe(user) {
         return this.companiesService.getMe(user);
     }
@@ -74,6 +65,15 @@ let CompaniesController = class CompaniesController {
     }
     adminGetSummary() {
         return this.companiesService.adminGetSummary();
+    }
+    getById(id, user) {
+        return this.companiesService.getById(id, user);
+    }
+    create(dto) {
+        return this.companiesService.create(dto);
+    }
+    update(id, dto, user) {
+        return this.companiesService.update(id, dto, user);
     }
     adminUpdateStatus(id, status) {
         return this.companiesService.adminUpdateStatus(id, status);
@@ -126,33 +126,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], CompaniesController.prototype, "getPlanLimits", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    (0, roles_decorator_1.Roles)('super_admin', 'company_admin'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], CompaniesController.prototype, "getById", null);
-__decorate([
-    (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('super_admin'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_company_dto_1.CreateCompanyDto]),
-    __metadata("design:returntype", void 0)
-], CompaniesController.prototype, "create", null);
-__decorate([
-    (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)('super_admin', 'company_admin'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __param(2, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_company_dto_1.UpdateCompanyDto, Object]),
-    __metadata("design:returntype", void 0)
-], CompaniesController.prototype, "update", null);
 __decorate([
     (0, common_1.Get)('me'),
     (0, roles_decorator_1.Roles)('company_admin'),
@@ -249,6 +222,33 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], CompaniesController.prototype, "adminGetSummary", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, roles_decorator_1.Roles)('super_admin', 'company_admin'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CompaniesController.prototype, "getById", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, roles_decorator_1.Roles)('super_admin'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_company_dto_1.CreateCompanyDto]),
+    __metadata("design:returntype", void 0)
+], CompaniesController.prototype, "create", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)('super_admin', 'company_admin'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_company_dto_1.UpdateCompanyDto, Object]),
+    __metadata("design:returntype", void 0)
+], CompaniesController.prototype, "update", null);
 __decorate([
     (0, common_1.Patch)('admin/:id/status'),
     (0, roles_decorator_1.Roles)('super_admin'),

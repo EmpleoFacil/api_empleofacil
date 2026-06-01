@@ -43,57 +43,6 @@ export declare class CompaniesController {
             jobsThisMonth: number;
         };
     }>;
-    getById(id: string, user: AuthUser): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        email: string | null;
-        phone: string | null;
-        status: import(".prisma/client").$Enums.CompanyStatus;
-        city: string | null;
-        country: string | null;
-        slug: string;
-        legalName: string | null;
-        address: string | null;
-        website: string | null;
-        logoUrl: string | null;
-        planId: string | null;
-    }>;
-    create(dto: CreateCompanyDto): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        email: string | null;
-        phone: string | null;
-        status: import(".prisma/client").$Enums.CompanyStatus;
-        city: string | null;
-        country: string | null;
-        slug: string;
-        legalName: string | null;
-        address: string | null;
-        website: string | null;
-        logoUrl: string | null;
-        planId: string | null;
-    }>;
-    update(id: string, dto: UpdateCompanyDto, user: AuthUser): Promise<{
-        id: string;
-        name: string;
-        createdAt: Date;
-        updatedAt: Date;
-        email: string | null;
-        phone: string | null;
-        status: import(".prisma/client").$Enums.CompanyStatus;
-        city: string | null;
-        country: string | null;
-        slug: string;
-        legalName: string | null;
-        address: string | null;
-        website: string | null;
-        logoUrl: string | null;
-        planId: string | null;
-    }>;
     getMe(user: AuthUser): Promise<({
         plan: {
             id: string;
@@ -316,6 +265,57 @@ export declare class CompaniesController {
             value: number;
             trend: number;
         };
+    }>;
+    getById(id: string, user: AuthUser): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string | null;
+        phone: string | null;
+        status: import(".prisma/client").$Enums.CompanyStatus;
+        city: string | null;
+        country: string | null;
+        slug: string;
+        legalName: string | null;
+        address: string | null;
+        website: string | null;
+        logoUrl: string | null;
+        planId: string | null;
+    }>;
+    create(dto: CreateCompanyDto): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string | null;
+        phone: string | null;
+        status: import(".prisma/client").$Enums.CompanyStatus;
+        city: string | null;
+        country: string | null;
+        slug: string;
+        legalName: string | null;
+        address: string | null;
+        website: string | null;
+        logoUrl: string | null;
+        planId: string | null;
+    }>;
+    update(id: string, dto: UpdateCompanyDto, user: AuthUser): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string | null;
+        phone: string | null;
+        status: import(".prisma/client").$Enums.CompanyStatus;
+        city: string | null;
+        country: string | null;
+        slug: string;
+        legalName: string | null;
+        address: string | null;
+        website: string | null;
+        logoUrl: string | null;
+        planId: string | null;
     }>;
     adminUpdateStatus(id: string, status: string): Promise<{
         id: string;

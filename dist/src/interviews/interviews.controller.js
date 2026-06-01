@@ -34,6 +34,15 @@ let InterviewsController = class InterviewsController {
     listForCandidate(user) {
         return this.interviewsService.listForCandidate(user);
     }
+    listForCompany(user) {
+        return this.interviewsService.listForCompany(user);
+    }
+    getUpcoming(user, limit) {
+        return this.interviewsService.getUpcoming(user, limit ? parseInt(limit) : 5);
+    }
+    getSummary(user) {
+        return this.interviewsService.getSummary(user);
+    }
     getById(id, user) {
         return this.interviewsService.getById(id, user);
     }
@@ -43,17 +52,11 @@ let InterviewsController = class InterviewsController {
     requestReschedule(id, dto, user) {
         return this.interviewsService.requestReschedule(id, dto, user);
     }
-    listForCompany(user) {
-        return this.interviewsService.listForCompany(user);
-    }
     updateStatus(id, dto, user) {
         return this.interviewsService.updateStatus(id, dto, user);
     }
     reschedule(id, dto, user) {
         return this.interviewsService.reschedule(id, dto, user);
-    }
-    getSummary(user) {
-        return this.interviewsService.getSummary(user);
     }
     update(id, user, data) {
         return this.interviewsService.update(id, user, data);
@@ -84,6 +87,31 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], InterviewsController.prototype, "listForCandidate", null);
 __decorate([
+    (0, common_1.Get)('company'),
+    (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], InterviewsController.prototype, "listForCompany", null);
+__decorate([
+    (0, common_1.Get)('company/upcoming'),
+    (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], InterviewsController.prototype, "getUpcoming", null);
+__decorate([
+    (0, common_1.Get)('company/summary'),
+    (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], InterviewsController.prototype, "getSummary", null);
+__decorate([
     (0, common_1.Get)(':id'),
     (0, roles_decorator_1.Roles)('candidate', 'company_admin', 'super_admin'),
     __param(0, (0, common_1.Param)('id')),
@@ -112,14 +140,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], InterviewsController.prototype, "requestReschedule", null);
 __decorate([
-    (0, common_1.Get)('company'),
-    (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
-    __param(0, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], InterviewsController.prototype, "listForCompany", null);
-__decorate([
     (0, common_1.Patch)(':id/status'),
     (0, roles_decorator_1.Roles)('company_admin', 'super_admin', 'candidate'),
     __param(0, (0, common_1.Param)('id')),
@@ -139,14 +159,6 @@ __decorate([
     __metadata("design:paramtypes", [String, reschedule_interview_dto_1.RescheduleInterviewDto, Object]),
     __metadata("design:returntype", void 0)
 ], InterviewsController.prototype, "reschedule", null);
-__decorate([
-    (0, common_1.Get)('company/summary'),
-    (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),
-    __param(0, (0, current_user_decorator_1.CurrentUser)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], InterviewsController.prototype, "getSummary", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, roles_decorator_1.Roles)('company_admin', 'super_admin'),

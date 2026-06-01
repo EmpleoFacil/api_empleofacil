@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../common/types/auth-user';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class CompaniesService {
@@ -118,6 +119,18 @@ export class CompaniesService {
     };
   }
 
+  private mapCompanyRole(role: string): string {
+    const mapping: Record<string, string> = {
+      company_admin: 'admin',
+      company_recruiter: 'recruiter',
+      admin: 'admin',
+      recruiter: 'recruiter',
+      editor: 'editor',
+      viewer: 'viewer',
+    };
+    return mapping[role] ?? 'viewer';
+  }
+
   private slugify(value: string) {
     return value
       .toLowerCase()
@@ -171,7 +184,6 @@ export class CompaniesService {
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
-    const bcrypt = await import('bcryptjs');
     const passwordHash = await bcrypt.hash(data.password, 10);
 
     const newUser = await this.prisma.user.create({
@@ -187,7 +199,7 @@ export class CompaniesService {
       data: {
         companyId: user.companyId,
         userId: newUser.id,
-        role: data.role as any,
+        role: this.mapCompanyRole(data.role) as any,
       },
     });
 
@@ -208,7 +220,7 @@ export class CompaniesService {
     if (data.role) {
       await this.prisma.companyUser.update({
         where: { id: companyUser.id },
-        data: { role: data.role as any },
+        data: { role: this.mapCompanyRole(data.role) as any },
       });
     }
 
@@ -461,7 +473,6 @@ export class CompaniesService {
   }
 
   async adminCreateCompanyUser(companyId: string, data: { email: string; role: string; password: string }) {
-    const bcrypt = await import('bcryptjs');
     const passwordHash = await bcrypt.hash(data.password, 10);
 
     const newUser = await this.prisma.user.create({
@@ -477,7 +488,7 @@ export class CompaniesService {
       data: {
         companyId,
         userId: newUser.id,
-        role: data.role as any,
+        role: this.mapCompanyRole(data.role) as any,
       },
     });
 
@@ -493,7 +504,7 @@ export class CompaniesService {
     if (data.role) {
       await this.prisma.companyUser.update({
         where: { id: companyUser.id },
-        data: { role: data.role as any },
+        data: { role: this.mapCompanyRole(data.role) as any },
       });
     }
 

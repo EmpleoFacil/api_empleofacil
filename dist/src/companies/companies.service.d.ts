@@ -94,6 +94,7 @@ export declare class CompaniesService {
             jobsThisMonth: number;
         };
     }>;
+    private mapCompanyRole;
     private slugify;
     getMe(user: AuthUser): Promise<({
         plan: {

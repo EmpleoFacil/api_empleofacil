@@ -355,6 +355,69 @@ export declare class InterviewsService {
         responsibleUserId: string | null;
         applicationId: string;
     })[]>;
+    getUpcoming(user: AuthUser, limit?: number): import(".prisma/client").Prisma.PrismaPromise<({
+        candidate: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            phone: string | null;
+            status: import(".prisma/client").$Enums.UserStatus;
+            fullName: string;
+            city: string | null;
+            country: string | null;
+            desiredJobType: string | null;
+            availability: string | null;
+            salaryExpectationMin: number | null;
+            salaryExpectationMax: number | null;
+            experienceLevel: string | null;
+            educationLevel: string | null;
+            profileCompletion: number;
+            userId: string;
+        };
+        application: {
+            job: {
+                id: string;
+                currency: string;
+                createdAt: Date;
+                updatedAt: Date;
+                status: import(".prisma/client").$Enums.JobStatus;
+                city: string | null;
+                country: string | null;
+                companyId: string;
+                title: string;
+                description: string | null;
+                requirements: string[];
+                benefits: string[];
+                salaryMin: number | null;
+                salaryMax: number | null;
+                employmentType: string | null;
+                modality: string | null;
+                categoryId: string | null;
+            };
+        } & {
+            id: string;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.ApplicationStatus;
+            appliedAt: Date;
+            jobId: string;
+            candidateId: string;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        status: import(".prisma/client").$Enums.InterviewStatus;
+        companyId: string;
+        modality: string;
+        jobId: string;
+        candidateId: string;
+        date: Date;
+        location: string | null;
+        meetingUrl: string | null;
+        notesForCandidate: string | null;
+        responsibleUserId: string | null;
+        applicationId: string;
+    })[]>;
     updateStatus(id: string, dto: UpdateInterviewStatusDto, user: AuthUser): Promise<{
         id: string;
         createdAt: Date;

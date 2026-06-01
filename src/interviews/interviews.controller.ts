@@ -17,6 +17,8 @@ import { InterviewsService } from './interviews.service';
 export class InterviewsController {
   constructor(private readonly interviewsService: InterviewsService) {}
 
+  // ========== Literal routes first ==========
+
   @Post()
   @Roles('company_admin', 'super_admin')
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateInterviewDto) {
@@ -28,6 +30,26 @@ export class InterviewsController {
   listForCandidate(@CurrentUser() user: AuthUser) {
     return this.interviewsService.listForCandidate(user);
   }
+
+  @Get('company')
+  @Roles('company_admin', 'super_admin')
+  listForCompany(@CurrentUser() user: AuthUser) {
+    return this.interviewsService.listForCompany(user);
+  }
+
+  @Get('company/upcoming')
+  @Roles('company_admin', 'super_admin')
+  getUpcoming(@CurrentUser() user: AuthUser, @Query('limit') limit?: string) {
+    return this.interviewsService.getUpcoming(user, limit ? parseInt(limit) : 5);
+  }
+
+  @Get('company/summary')
+  @Roles('company_admin', 'super_admin')
+  getSummary(@CurrentUser() user: AuthUser) {
+    return this.interviewsService.getSummary(user);
+  }
+
+  // ========== Param routes ==========
 
   @Get(':id')
   @Roles('candidate', 'company_admin', 'super_admin')
@@ -51,12 +73,6 @@ export class InterviewsController {
     return this.interviewsService.requestReschedule(id, dto, user);
   }
 
-  @Get('company')
-  @Roles('company_admin', 'super_admin')
-  listForCompany(@CurrentUser() user: AuthUser) {
-    return this.interviewsService.listForCompany(user);
-  }
-
   @Patch(':id/status')
   @Roles('company_admin', 'super_admin', 'candidate')
   updateStatus(
@@ -75,12 +91,6 @@ export class InterviewsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.interviewsService.reschedule(id, dto, user);
-  }
-
-  @Get('company/summary')
-  @Roles('company_admin', 'super_admin')
-  getSummary(@CurrentUser() user: AuthUser) {
-    return this.interviewsService.getSummary(user);
   }
 
   @Patch(':id')
