@@ -80,7 +80,7 @@ export declare class CompaniesController {
         city?: string;
         address?: string;
         website?: string;
-        logo?: string;
+        logoUrl?: string;
     }): Promise<{
         id: string;
         name: string;
@@ -97,6 +97,9 @@ export declare class CompaniesController {
         website: string | null;
         logoUrl: string | null;
         planId: string | null;
+    }>;
+    uploadMeLogo(user: AuthUser, file: Express.Multer.File): Promise<{
+        logoUrl: string;
     }>;
     getUsers(user: AuthUser): Promise<{
         companyRole: import(".prisma/client").$Enums.CompanyRole;

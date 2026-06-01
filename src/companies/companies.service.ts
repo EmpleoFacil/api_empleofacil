@@ -4,10 +4,14 @@ import { AuthUser } from '../common/types/auth-user';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import * as bcrypt from 'bcryptjs';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: SupabaseStorageService,
+  ) {}
 
   list(user: AuthUser) {
     if (user.role === 'super_admin') {
@@ -150,7 +154,7 @@ export class CompaniesService {
     });
   }
 
-  async updateMe(user: AuthUser, data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; logo?: string }) {
+  async updateMe(user: AuthUser, data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; logoUrl?: string }) {
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
@@ -163,9 +167,35 @@ export class CompaniesService {
         ...(data.city && { city: data.city }),
         ...(data.address && { address: data.address }),
         ...(data.website && { website: data.website }),
-        ...(data.logo && { logo: data.logo }),
+        ...(data.logoUrl && { logoUrl: data.logoUrl }),
       },
     });
+  }
+
+  async uploadMyLogo(user: AuthUser, file: Express.Multer.File) {
+    if (!user.companyId) {
+      throw new ForbiddenException('Usuario sin empresa asignada.');
+    }
+
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowed.includes(file.mimetype)) {
+      throw new ForbiddenException('Formato no permitido. Usa PNG, JPG o WEBP.');
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      throw new ForbiddenException('El logo excede 2MB.');
+    }
+
+    const ext = file.originalname.split('.').pop()?.toLowerCase() || 'png';
+    const fileName = `logo-${Date.now()}.${ext}`;
+    const logoUrl = await this.storage.upload(file, fileName, `companies/${user.companyId}`);
+
+    await this.prisma.company.update({
+      where: { id: user.companyId },
+      data: { logoUrl },
+    });
+
+    return { logoUrl };
   }
 
   async getUsers(user: AuthUser) {

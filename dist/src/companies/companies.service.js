@@ -46,10 +46,13 @@ exports.CompaniesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcryptjs"));
+const supabase_storage_service_1 = require("../supabase/supabase-storage.service");
 let CompaniesService = class CompaniesService {
     prisma;
-    constructor(prisma) {
+    storage;
+    constructor(prisma, storage) {
         this.prisma = prisma;
+        this.storage = storage;
     }
     list(user) {
         if (user.role === 'super_admin') {
@@ -184,9 +187,29 @@ let CompaniesService = class CompaniesService {
                 ...(data.city && { city: data.city }),
                 ...(data.address && { address: data.address }),
                 ...(data.website && { website: data.website }),
-                ...(data.logo && { logo: data.logo }),
+                ...(data.logoUrl && { logoUrl: data.logoUrl }),
             },
         });
+    }
+    async uploadMyLogo(user, file) {
+        if (!user.companyId) {
+            throw new common_1.ForbiddenException('Usuario sin empresa asignada.');
+        }
+        const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        if (!allowed.includes(file.mimetype)) {
+            throw new common_1.ForbiddenException('Formato no permitido. Usa PNG, JPG o WEBP.');
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            throw new common_1.ForbiddenException('El logo excede 2MB.');
+        }
+        const ext = file.originalname.split('.').pop()?.toLowerCase() || 'png';
+        const fileName = `logo-${Date.now()}.${ext}`;
+        const logoUrl = await this.storage.upload(file, fileName, `companies/${user.companyId}`);
+        await this.prisma.company.update({
+            where: { id: user.companyId },
+            data: { logoUrl },
+        });
+        return { logoUrl };
     }
     async getUsers(user) {
         if (!user.companyId) {
@@ -513,6 +536,7 @@ let CompaniesService = class CompaniesService {
 exports.CompaniesService = CompaniesService;
 exports.CompaniesService = CompaniesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        supabase_storage_service_1.SupabaseStorageService])
 ], CompaniesService);
 //# sourceMappingURL=companies.service.js.map

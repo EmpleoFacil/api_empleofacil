@@ -2,9 +2,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../common/types/auth-user';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 export declare class CompaniesService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly storage;
+    constructor(prisma: PrismaService, storage: SupabaseStorageService);
     list(user: AuthUser): never[] | import(".prisma/client").Prisma.PrismaPromise<{
         id: string;
         name: string;
@@ -133,7 +135,7 @@ export declare class CompaniesService {
         city?: string;
         address?: string;
         website?: string;
-        logo?: string;
+        logoUrl?: string;
     }): Promise<{
         id: string;
         name: string;
@@ -150,6 +152,9 @@ export declare class CompaniesService {
         website: string | null;
         logoUrl: string | null;
         planId: string | null;
+    }>;
+    uploadMyLogo(user: AuthUser, file: Express.Multer.File): Promise<{
+        logoUrl: string;
     }>;
     getUsers(user: AuthUser): Promise<{
         companyRole: import(".prisma/client").$Enums.CompanyRole;

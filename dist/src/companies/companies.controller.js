@@ -14,7 +14,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CompaniesController = void 0;
 const common_1 = require("@nestjs/common");
+const common_2 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const platform_express_1 = require("@nestjs/platform-express");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
@@ -38,6 +40,9 @@ let CompaniesController = class CompaniesController {
     }
     updateMe(user, data) {
         return this.companiesService.updateMe(user, data);
+    }
+    uploadMeLogo(user, file) {
+        return this.companiesService.uploadMyLogo(user, file);
     }
     getUsers(user) {
         return this.companiesService.getUsers(user);
@@ -143,6 +148,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], CompaniesController.prototype, "updateMe", null);
+__decorate([
+    (0, common_1.Post)('me/logo'),
+    (0, roles_decorator_1.Roles)('company_admin'),
+    (0, common_2.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_2.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], CompaniesController.prototype, "uploadMeLogo", null);
 __decorate([
     (0, common_1.Get)('me/users'),
     (0, roles_decorator_1.Roles)('company_admin'),

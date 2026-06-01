@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -38,8 +40,15 @@ export class CompaniesController {
 
   @Patch('me')
   @Roles('company_admin')
-  updateMe(@CurrentUser() user: AuthUser, @Body() data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; logo?: string }) {
+  updateMe(@CurrentUser() user: AuthUser, @Body() data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; logoUrl?: string }) {
     return this.companiesService.updateMe(user, data);
+  }
+
+  @Post('me/logo')
+  @Roles('company_admin')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadMeLogo(@CurrentUser() user: AuthUser, @UploadedFile() file: Express.Multer.File) {
+    return this.companiesService.uploadMyLogo(user, file);
   }
 
   @Get('me/users')

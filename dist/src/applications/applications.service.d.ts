@@ -26,6 +26,9 @@ export declare class ApplicationsService {
             date: Date;
             location: string | null;
             meetingUrl: string | null;
+            interviewerName: string | null;
+            contactPhone: string | null;
+            mapUrl: string | null;
             notesForCandidate: string | null;
             responsibleUserId: string | null;
             applicationId: string;
@@ -122,6 +125,9 @@ export declare class ApplicationsService {
             date: Date;
             location: string | null;
             meetingUrl: string | null;
+            interviewerName: string | null;
+            contactPhone: string | null;
+            mapUrl: string | null;
             notesForCandidate: string | null;
             responsibleUserId: string | null;
             applicationId: string;
