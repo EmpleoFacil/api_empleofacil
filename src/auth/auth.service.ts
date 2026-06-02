@@ -3,8 +3,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import * as nodemailer from 'nodemailer';
 import { AuthUser } from '../common/types/auth-user';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
@@ -18,6 +20,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
   async registerCandidate(dto: RegisterCandidateDto) {
@@ -27,10 +30,9 @@ export class AuthService {
 
     const existing = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: dto.email ?? '' },
-          { phone: dto.phone ?? '' },
-        ].filter((c) => Object.values(c).some(Boolean)) as any,
+        OR: [{ email: dto.email ?? '' }, { phone: dto.phone ?? '' }].filter(
+          (c) => Object.values(c).some(Boolean),
+        ) as any,
       },
     });
 
@@ -60,7 +62,11 @@ export class AuthService {
       include: { candidateProfile: true },
     });
 
-    return this.buildAuthResponse(user, user.candidateProfile?.id ?? null, null);
+    return this.buildAuthResponse(
+      user,
+      user.candidateProfile?.id ?? null,
+      null,
+    );
   }
 
   async login(dto: LoginDto) {
@@ -82,7 +88,11 @@ export class AuthService {
     }
 
     const companyId = user.companyUsers[0]?.companyId ?? null;
-    return this.buildAuthResponse(user, user.candidateProfile?.id ?? null, companyId);
+    return this.buildAuthResponse(
+      user,
+      user.candidateProfile?.id ?? null,
+      companyId,
+    );
   }
 
   async recoverAccess(dto: RecoverAccessDto) {
@@ -109,11 +119,12 @@ export class AuthService {
         expiresAt,
       },
     });
+    const delivery = await this.deliverRecoveryCode(user, code);
 
     return {
       recoveryId: recovery.id,
       expiresIn: 300,
-      deliveryMethod: user.phone ? 'sms' : 'email',
+      ...delivery,
     };
   }
 
@@ -187,7 +198,16 @@ export class AuthService {
     });
   }
 
-  private buildAuthResponse(user: { id: string; email: string | null; phone: string | null; role: string }, candidateId: string | null, companyId: string | null) {
+  private buildAuthResponse(
+    user: {
+      id: string;
+      email: string | null;
+      phone: string | null;
+      role: string;
+    },
+    candidateId: string | null,
+    companyId: string | null,
+  ) {
     const payload = {
       sub: user.id,
       role: user.role,
@@ -206,5 +226,52 @@ export class AuthService {
         companyId,
       },
     };
+  }
+
+  private async deliverRecoveryCode(
+    user: { email: string | null; phone: string | null },
+    code: string,
+  ) {
+    const smtpHost = this.config.get<string>('SMTP_HOST');
+    const smtpPort = Number(this.config.get<string>('SMTP_PORT') ?? '587');
+    const smtpUser = this.config.get<string>('SMTP_USER');
+    const smtpPass = this.config.get<string>('SMTP_PASS');
+    const smtpFrom =
+      this.config.get<string>('SMTP_FROM') ?? 'no-reply@empleofacil.local';
+    const isProduction = this.config.get<string>('NODE_ENV') === 'production';
+
+    if (user.email && smtpHost && smtpUser && smtpPass) {
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort == 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+
+      await transporter.sendMail({
+        from: smtpFrom,
+        to: user.email,
+        subject: 'Codigo de recuperacion - Empleo',
+        text: 'Tu codigo de recuperacion es ' + code + '. Expira en 5 minutos.',
+      });
+
+      return {
+        deliveryMethod: 'email',
+      };
+    }
+
+    if (!isProduction) {
+      return {
+        deliveryMethod: user.phone ? 'sms' : 'email',
+        debugCode: code,
+      };
+    }
+
+    throw new BadRequestException(
+      'Recuperacion no configurada para este entorno.',
+    );
   }
 }

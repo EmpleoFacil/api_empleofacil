@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateCandidateDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpdateCandidateDto {
+    email;
     fullName;
     city;
     country;
@@ -25,6 +26,11 @@ class UpdateCandidateDto {
     profileCompletion;
 }
 exports.UpdateCandidateDto = UpdateCandidateDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], UpdateCandidateDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

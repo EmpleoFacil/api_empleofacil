@@ -1,11 +1,13 @@
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { MessagesGateway } from './messages.gateway';
 import { RespondMessageDto } from './dto/respond-message.dto';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 export declare class MessagesService {
     private readonly prisma;
-    constructor(prisma: PrismaService);
+    private readonly messagesGateway;
+    constructor(prisma: PrismaService, messagesGateway: MessagesGateway);
     create(user: AuthUser, dto: CreateMessageDto): Promise<{
         id: string;
         createdAt: Date;
@@ -22,7 +24,7 @@ export declare class MessagesService {
         respondedAt: Date | null;
         parentMessageId: string | null;
     }>;
-    listForCandidate(user: AuthUser): import(".prisma/client").Prisma.PrismaPromise<({
+    listForCandidate(user: AuthUser, filter?: string): import(".prisma/client").Prisma.PrismaPromise<({
         company: {
             id: string;
             name: string;
@@ -53,8 +55,8 @@ export declare class MessagesService {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;
@@ -123,8 +125,8 @@ export declare class MessagesService {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;
@@ -191,8 +193,8 @@ export declare class MessagesService {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;
@@ -217,8 +219,8 @@ export declare class MessagesService {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         };
     }>;
     updateStatus(id: string, dto: UpdateMessageStatusDto, user: AuthUser): Promise<{
@@ -295,8 +297,8 @@ export declare class MessagesService {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;

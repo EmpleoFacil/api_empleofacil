@@ -1,4 +1,5 @@
 export declare class UpdateCandidateDto {
+    email?: string;
     fullName?: string;
     city?: string;
     country?: string;

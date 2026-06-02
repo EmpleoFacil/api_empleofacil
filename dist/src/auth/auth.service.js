@@ -44,15 +44,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
+const config_1 = require("@nestjs/config");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcryptjs"));
+const nodemailer = __importStar(require("nodemailer"));
 const prisma_service_1 = require("../prisma/prisma.service");
 let AuthService = class AuthService {
     prisma;
     jwtService;
-    constructor(prisma, jwtService) {
+    config;
+    constructor(prisma, jwtService, config) {
         this.prisma = prisma;
         this.jwtService = jwtService;
+        this.config = config;
     }
     async registerCandidate(dto) {
         if (!dto.email && !dto.phone) {
@@ -60,10 +64,7 @@ let AuthService = class AuthService {
         }
         const existing = await this.prisma.user.findFirst({
             where: {
-                OR: [
-                    { email: dto.email ?? '' },
-                    { phone: dto.phone ?? '' },
-                ].filter((c) => Object.values(c).some(Boolean)),
+                OR: [{ email: dto.email ?? '' }, { phone: dto.phone ?? '' }].filter((c) => Object.values(c).some(Boolean)),
             },
         });
         if (existing) {
@@ -129,10 +130,11 @@ let AuthService = class AuthService {
                 expiresAt,
             },
         });
+        const delivery = await this.deliverRecoveryCode(user, code);
         return {
             recoveryId: recovery.id,
             expiresIn: 300,
-            deliveryMethod: user.phone ? 'sms' : 'email',
+            ...delivery,
         };
     }
     async verifyCode(dto) {
@@ -211,11 +213,47 @@ let AuthService = class AuthService {
             },
         };
     }
+    async deliverRecoveryCode(user, code) {
+        const smtpHost = this.config.get('SMTP_HOST');
+        const smtpPort = Number(this.config.get('SMTP_PORT') ?? '587');
+        const smtpUser = this.config.get('SMTP_USER');
+        const smtpPass = this.config.get('SMTP_PASS');
+        const smtpFrom = this.config.get('SMTP_FROM') ?? 'no-reply@empleofacil.local';
+        const isProduction = this.config.get('NODE_ENV') === 'production';
+        if (user.email && smtpHost && smtpUser && smtpPass) {
+            const transporter = nodemailer.createTransport({
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort == 465,
+                auth: {
+                    user: smtpUser,
+                    pass: smtpPass,
+                },
+            });
+            await transporter.sendMail({
+                from: smtpFrom,
+                to: user.email,
+                subject: 'Codigo de recuperacion - Empleo',
+                text: 'Tu codigo de recuperacion es ' + code + '. Expira en 5 minutos.',
+            });
+            return {
+                deliveryMethod: 'email',
+            };
+        }
+        if (!isProduction) {
+            return {
+                deliveryMethod: user.phone ? 'sms' : 'email',
+                debugCode: code,
+            };
+        }
+        throw new common_1.BadRequestException('Recuperacion no configurada para este entorno.');
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        config_1.ConfigService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

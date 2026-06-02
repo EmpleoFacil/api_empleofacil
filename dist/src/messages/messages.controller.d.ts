@@ -22,7 +22,7 @@ export declare class MessagesController {
         respondedAt: Date | null;
         parentMessageId: string | null;
     }>;
-    listForCandidate(user: AuthUser): import(".prisma/client").Prisma.PrismaPromise<({
+    listForCandidate(user: AuthUser, filter?: string): import(".prisma/client").Prisma.PrismaPromise<({
         company: {
             id: string;
             name: string;
@@ -53,8 +53,8 @@ export declare class MessagesController {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;
@@ -143,8 +143,8 @@ export declare class MessagesController {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;
@@ -211,8 +211,8 @@ export declare class MessagesController {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         }[];
     } & {
         id: string;
@@ -237,8 +237,8 @@ export declare class MessagesController {
             createdAt: Date;
             candidateId: string;
             body: string | null;
-            responseType: string;
             messageId: string;
+            responseType: string;
         };
     }>;
     updateStatus(id: string, dto: UpdateMessageStatusDto, user: AuthUser): Promise<{

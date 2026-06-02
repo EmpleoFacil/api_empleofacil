@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -25,8 +35,11 @@ export class MessagesController {
 
   @Get('me')
   @Roles('candidate')
-  listForCandidate(@CurrentUser() user: AuthUser) {
-    return this.messagesService.listForCandidate(user);
+  listForCandidate(
+    @CurrentUser() user: AuthUser,
+    @Query('filter') filter?: string,
+  ) {
+    return this.messagesService.listForCandidate(user, filter);
   }
 
   @Get('me/unread-count')
@@ -100,13 +113,21 @@ export class MessagesController {
 
   @Post('templates')
   @Roles('company_admin', 'super_admin')
-  createTemplate(@CurrentUser() user: AuthUser, @Body() data: { name: string; subject: string; body: string; type?: string }) {
+  createTemplate(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    data: { name: string; subject: string; body: string; type?: string },
+  ) {
     return this.messagesService.createTemplate(user, data);
   }
 
   @Patch('templates/:id')
   @Roles('company_admin', 'super_admin')
-  updateTemplate(@Param('id') id: string, @CurrentUser() user: AuthUser, @Body() data: { name?: string; subject?: string; body?: string }) {
+  updateTemplate(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @Body() data: { name?: string; subject?: string; body?: string },
+  ) {
     return this.messagesService.updateTemplate(id, user, data);
   }
 

@@ -23,27 +23,58 @@ let CandidatesService = class CandidatesService {
         }
         return this.prisma.candidateProfile.findUnique({
             where: { id: user.candidateId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                    },
+                },
+            },
         });
     }
     async updateMe(user, dto) {
         if (!user.candidateId) {
             throw new common_1.ForbiddenException('Usuario no es candidato.');
         }
-        return this.prisma.candidateProfile.update({
-            where: { id: user.candidateId },
-            data: {
-                fullName: dto.fullName,
-                city: dto.city,
-                country: dto.country,
-                phone: dto.phone,
-                desiredJobType: dto.desiredJobType,
-                availability: dto.availability,
-                salaryExpectationMin: dto.salaryExpectationMin,
-                salaryExpectationMax: dto.salaryExpectationMax,
-                experienceLevel: dto.experienceLevel,
-                educationLevel: dto.educationLevel,
-                profileCompletion: dto.profileCompletion,
-            },
+        const candidateData = {
+            fullName: dto.fullName,
+            city: dto.city,
+            country: dto.country,
+            phone: dto.phone,
+            desiredJobType: dto.desiredJobType,
+            availability: dto.availability,
+            salaryExpectationMin: dto.salaryExpectationMin,
+            salaryExpectationMax: dto.salaryExpectationMax,
+            experienceLevel: dto.experienceLevel,
+            educationLevel: dto.educationLevel,
+            profileCompletion: dto.profileCompletion,
+        };
+        const userData = {
+            ...(dto.email != null ? { email: dto.email } : {}),
+            ...(dto.phone != null ? { phone: dto.phone } : {}),
+        };
+        return this.prisma.$transaction(async (tx) => {
+            if (Object.keys(userData).length > 0) {
+                await tx.user.update({
+                    where: { id: user.id },
+                    data: userData,
+                });
+            }
+            return tx.candidateProfile.update({
+                where: { id: user.candidateId },
+                data: candidateData,
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            email: true,
+                            phone: true,
+                        },
+                    },
+                },
+            });
         });
     }
     async list(user) {
@@ -117,13 +148,28 @@ let CandidatesService = class CandidatesService {
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const [total, complete, pending, active, totalPrev, completePrev] = await Promise.all([
             this.prisma.candidateProfile.count(),
-            this.prisma.candidateProfile.count({ where: { profileCompletion: { gte: 80 } } }),
-            this.prisma.candidateDocument.count({ where: { status: { in: ['pending', 'uploaded'] } } }),
+            this.prisma.candidateProfile.count({
+                where: { profileCompletion: { gte: 80 } },
+            }),
+            this.prisma.candidateDocument.count({
+                where: { status: { in: ['pending', 'uploaded'] } },
+            }),
             this.prisma.candidateProfile.count({ where: { status: 'active' } }),
-            this.prisma.candidateProfile.count({ where: { createdAt: { lt: thirtyDaysAgo } } }),
-            this.prisma.candidateProfile.count({ where: { profileCompletion: { gte: 80 }, createdAt: { lt: thirtyDaysAgo } } }),
+            this.prisma.candidateProfile.count({
+                where: { createdAt: { lt: thirtyDaysAgo } },
+            }),
+            this.prisma.candidateProfile.count({
+                where: {
+                    profileCompletion: { gte: 80 },
+                    createdAt: { lt: thirtyDaysAgo },
+                },
+            }),
         ]);
-        const calcTrend = (current, prev) => prev === 0 ? (current > 0 ? 100 : 0) : Math.round(((current - prev) / prev) * 100);
+        const calcTrend = (current, prev) => prev === 0
+            ? current > 0
+                ? 100
+                : 0
+            : Math.round(((current - prev) / prev) * 100);
         return {
             total: { value: total, trend: calcTrend(total, totalPrev) },
             complete: { value: complete, trend: calcTrend(complete, completePrev) },

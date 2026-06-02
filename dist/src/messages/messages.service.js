@@ -12,17 +12,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const messages_gateway_1 = require("./messages.gateway");
 let MessagesService = class MessagesService {
     prisma;
-    constructor(prisma) {
+    messagesGateway;
+    constructor(prisma, messagesGateway) {
         this.prisma = prisma;
+        this.messagesGateway = messagesGateway;
     }
     async create(user, dto) {
         const companyId = user.role === 'super_admin' ? dto.companyId : user.companyId;
         if (!companyId) {
             throw new common_1.ForbiddenException('CompanyId requerido.');
         }
-        return this.prisma.message.create({
+        const message = await this.prisma.message.create({
             data: {
                 companyId,
                 candidateId: dto.candidateId,
@@ -34,13 +37,28 @@ let MessagesService = class MessagesService {
                 sentAt: new Date(),
             },
         });
+        this.messagesGateway.emitMessageCreated(message);
+        return message;
     }
-    listForCandidate(user) {
+    listForCandidate(user, filter) {
         if (!user.candidateId) {
             throw new common_1.ForbiddenException('Usuario no es candidato.');
         }
+        const where = {
+            candidateId: user.candidateId,
+        };
+        if (filter == 'important') {
+            where.type = {
+                in: ['interview_invitation', 'document_request'],
+            };
+        }
+        if (filter == 'unread') {
+            where.status = {
+                in: ['sent', 'unread'],
+            };
+        }
         return this.prisma.message.findMany({
-            where: { candidateId: user.candidateId },
+            where,
             include: { company: true, application: true, responses: true },
             orderBy: { createdAt: 'desc' },
         });
@@ -65,10 +83,12 @@ let MessagesService = class MessagesService {
         if (user.role === 'candidate' && user.candidateId !== message.candidateId) {
             throw new common_1.ForbiddenException('No tienes acceso a este mensaje.');
         }
-        return this.prisma.message.update({
+        const updated = await this.prisma.message.update({
             where: { id },
             data: { status: 'read', readAt: new Date() },
         });
+        this.messagesGateway.emitMessageUpdated(updated);
+        return updated;
     }
     listForCompany(user) {
         if (user.role === 'super_admin') {
@@ -89,7 +109,12 @@ let MessagesService = class MessagesService {
     async getById(id, user) {
         const message = await this.prisma.message.findUnique({
             where: { id },
-            include: { company: true, candidate: true, application: true, responses: true },
+            include: {
+                company: true,
+                candidate: true,
+                application: true,
+                responses: true,
+            },
         });
         if (!message) {
             throw new common_1.NotFoundException('Mensaje no encontrado.');
@@ -121,9 +146,13 @@ let MessagesService = class MessagesService {
                 body: dto.body,
             },
         });
-        await this.prisma.message.update({
+        const updated = await this.prisma.message.update({
             where: { id: message.id },
             data: { status: 'responded', respondedAt: new Date() },
+        });
+        this.messagesGateway.emitMessageResponded({
+            ...updated,
+            response,
         });
         return { messageId: message.id, response };
     }
@@ -135,10 +164,12 @@ let MessagesService = class MessagesService {
         if (user.role === 'company_admin' && user.companyId !== message.companyId) {
             throw new common_1.ForbiddenException('No tienes acceso a este mensaje.');
         }
-        return this.prisma.message.update({
+        const updated = await this.prisma.message.update({
             where: { id },
             data: { status: dto.status },
         });
+        this.messagesGateway.emitMessageUpdated(updated);
+        return updated;
     }
     listForCompanyPaginated(user, params) {
         const { status, candidateId, search, page = 1, limit = 20 } = params;
@@ -158,7 +189,11 @@ let MessagesService = class MessagesService {
         }
         return this.prisma.message.findMany({
             where,
-            include: { candidate: true, application: { include: { job: true } }, responses: true },
+            include: {
+                candidate: true,
+                application: { include: { job: true } },
+                responses: true,
+            },
             orderBy: { createdAt: 'desc' },
             skip: (page - 1) * limit,
             take: limit,
@@ -172,17 +207,22 @@ let MessagesService = class MessagesService {
         if (user.role === 'company_admin' && user.companyId !== message.companyId) {
             throw new common_1.ForbiddenException('No tienes acceso a este mensaje.');
         }
-        return this.prisma.message.update({
+        const updated = await this.prisma.message.update({
             where: { id },
             data: { status: 'sent', sentAt: new Date() },
         });
+        this.messagesGateway.emitMessageUpdated(updated);
+        return updated;
     }
     getTemplates(user) {
         const where = {};
         if (user.role === 'company_admin' && user.companyId) {
             where.OR = [{ companyId: user.companyId }, { companyId: null }];
         }
-        return this.prisma.messageTemplate.findMany({ where, orderBy: { name: 'asc' } });
+        return this.prisma.messageTemplate.findMany({
+            where,
+            orderBy: { name: 'asc' },
+        });
     }
     createTemplate(user, data) {
         return this.prisma.messageTemplate.create({
@@ -196,19 +236,25 @@ let MessagesService = class MessagesService {
         });
     }
     async updateTemplate(id, user, data) {
-        const template = await this.prisma.messageTemplate.findUnique({ where: { id } });
+        const template = await this.prisma.messageTemplate.findUnique({
+            where: { id },
+        });
         if (!template)
             throw new common_1.NotFoundException('Plantilla no encontrada.');
-        if (user.role === 'company_admin' && template.companyId !== user.companyId) {
+        if (user.role === 'company_admin' &&
+            template.companyId !== user.companyId) {
             throw new common_1.ForbiddenException('No tienes acceso a esta plantilla.');
         }
         return this.prisma.messageTemplate.update({ where: { id }, data });
     }
     async deleteTemplate(id, user) {
-        const template = await this.prisma.messageTemplate.findUnique({ where: { id } });
+        const template = await this.prisma.messageTemplate.findUnique({
+            where: { id },
+        });
         if (!template)
             throw new common_1.NotFoundException('Plantilla no encontrada.');
-        if (user.role === 'company_admin' && template.companyId !== user.companyId) {
+        if (user.role === 'company_admin' &&
+            template.companyId !== user.companyId) {
             throw new common_1.ForbiddenException('No tienes acceso a esta plantilla.');
         }
         return this.prisma.messageTemplate.delete({ where: { id } });
@@ -217,6 +263,7 @@ let MessagesService = class MessagesService {
 exports.MessagesService = MessagesService;
 exports.MessagesService = MessagesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        messages_gateway_1.MessagesGateway])
 ], MessagesService);
 //# sourceMappingURL=messages.service.js.map

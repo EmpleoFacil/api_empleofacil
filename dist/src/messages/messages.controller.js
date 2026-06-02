@@ -31,8 +31,8 @@ let MessagesController = class MessagesController {
     create(user, dto) {
         return this.messagesService.create(user, dto);
     }
-    listForCandidate(user) {
-        return this.messagesService.listForCandidate(user);
+    listForCandidate(user, filter) {
+        return this.messagesService.listForCandidate(user, filter);
     }
     getUnreadCount(user) {
         return this.messagesService.getUnreadCount(user);
@@ -88,8 +88,9 @@ __decorate([
     (0, common_1.Get)('me'),
     (0, roles_decorator_1.Roles)('candidate'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)('filter')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], MessagesController.prototype, "listForCandidate", null);
 __decorate([

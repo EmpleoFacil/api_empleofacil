@@ -4,7 +4,13 @@ import { UpdateCandidateDto } from './dto/update-candidate.dto';
 export declare class CandidatesService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    getMe(user: AuthUser): Promise<{
+    getMe(user: AuthUser): Promise<({
+        user: {
+            id: string;
+            email: string | null;
+            phone: string | null;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -21,8 +27,14 @@ export declare class CandidatesService {
         educationLevel: string | null;
         profileCompletion: number;
         userId: string;
-    } | null>;
+    }) | null>;
     updateMe(user: AuthUser, dto: UpdateCandidateDto): Promise<{
+        user: {
+            id: string;
+            email: string | null;
+            phone: string | null;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;

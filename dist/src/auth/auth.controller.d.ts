@@ -33,13 +33,18 @@ export declare class AuthController {
     recoverAccess(dto: RecoverAccessDto): Promise<{
         status: string;
         message: string;
-        recoveryId?: undefined;
-        expiresIn?: undefined;
-        deliveryMethod?: undefined;
     } | {
+        deliveryMethod: string;
+        debugCode?: undefined;
         recoveryId: string;
         expiresIn: number;
+        status?: undefined;
+        message?: undefined;
+    } | {
         deliveryMethod: string;
+        debugCode: string;
+        recoveryId: string;
+        expiresIn: number;
         status?: undefined;
         message?: undefined;
     }>;

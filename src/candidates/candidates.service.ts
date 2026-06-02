@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
@@ -14,6 +18,15 @@ export class CandidatesService {
 
     return this.prisma.candidateProfile.findUnique({
       where: { id: user.candidateId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
     });
   }
 
@@ -22,21 +35,46 @@ export class CandidatesService {
       throw new ForbiddenException('Usuario no es candidato.');
     }
 
-    return this.prisma.candidateProfile.update({
-      where: { id: user.candidateId },
-      data: {
-        fullName: dto.fullName,
-        city: dto.city,
-        country: dto.country,
-        phone: dto.phone,
-        desiredJobType: dto.desiredJobType,
-        availability: dto.availability,
-        salaryExpectationMin: dto.salaryExpectationMin,
-        salaryExpectationMax: dto.salaryExpectationMax,
-        experienceLevel: dto.experienceLevel,
-        educationLevel: dto.educationLevel,
-        profileCompletion: dto.profileCompletion,
-      },
+    const candidateData = {
+      fullName: dto.fullName,
+      city: dto.city,
+      country: dto.country,
+      phone: dto.phone,
+      desiredJobType: dto.desiredJobType,
+      availability: dto.availability,
+      salaryExpectationMin: dto.salaryExpectationMin,
+      salaryExpectationMax: dto.salaryExpectationMax,
+      experienceLevel: dto.experienceLevel,
+      educationLevel: dto.educationLevel,
+      profileCompletion: dto.profileCompletion,
+    };
+
+    const userData = {
+      ...(dto.email != null ? { email: dto.email } : {}),
+      ...(dto.phone != null ? { phone: dto.phone } : {}),
+    };
+
+    return this.prisma.$transaction(async (tx) => {
+      if (Object.keys(userData).length > 0) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: userData,
+        });
+      }
+
+      return tx.candidateProfile.update({
+        where: { id: user.candidateId! },
+        data: candidateData,
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
     });
   }
 
@@ -85,7 +123,13 @@ export class CandidatesService {
     return candidate;
   }
 
-  async listPaginated(params: { search?: string; status?: string; city?: string; page?: number; limit?: number }) {
+  async listPaginated(params: {
+    search?: string;
+    status?: string;
+    city?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const { search, status, city, page = 1, limit = 20 } = params;
     const where: Record<string, unknown> = {};
 
@@ -122,16 +166,33 @@ export class CandidatesService {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const [total, complete, pending, active, totalPrev, completePrev] = await Promise.all([
-      this.prisma.candidateProfile.count(),
-      this.prisma.candidateProfile.count({ where: { profileCompletion: { gte: 80 } } }),
-      this.prisma.candidateDocument.count({ where: { status: { in: ['pending', 'uploaded'] } } }),
-      this.prisma.candidateProfile.count({ where: { status: 'active' } }),
-      this.prisma.candidateProfile.count({ where: { createdAt: { lt: thirtyDaysAgo } } }),
-      this.prisma.candidateProfile.count({ where: { profileCompletion: { gte: 80 }, createdAt: { lt: thirtyDaysAgo } } }),
-    ]);
+    const [total, complete, pending, active, totalPrev, completePrev] =
+      await Promise.all([
+        this.prisma.candidateProfile.count(),
+        this.prisma.candidateProfile.count({
+          where: { profileCompletion: { gte: 80 } },
+        }),
+        this.prisma.candidateDocument.count({
+          where: { status: { in: ['pending', 'uploaded'] } },
+        }),
+        this.prisma.candidateProfile.count({ where: { status: 'active' } }),
+        this.prisma.candidateProfile.count({
+          where: { createdAt: { lt: thirtyDaysAgo } },
+        }),
+        this.prisma.candidateProfile.count({
+          where: {
+            profileCompletion: { gte: 80 },
+            createdAt: { lt: thirtyDaysAgo },
+          },
+        }),
+      ]);
 
-    const calcTrend = (current: number, prev: number) => prev === 0 ? (current > 0 ? 100 : 0) : Math.round(((current - prev) / prev) * 100);
+    const calcTrend = (current: number, prev: number) =>
+      prev === 0
+        ? current > 0
+          ? 100
+          : 0
+        : Math.round(((current - prev) / prev) * 100);
 
     return {
       total: { value: total, trend: calcTrend(total, totalPrev) },
@@ -166,7 +227,8 @@ export class CandidatesService {
   async exportCandidates(params: { status?: string; city?: string }) {
     const where: Record<string, unknown> = {};
     if (params.status) where.status = params.status;
-    if (params.city) where.city = { contains: params.city, mode: 'insensitive' };
+    if (params.city)
+      where.city = { contains: params.city, mode: 'insensitive' };
 
     return this.prisma.candidateProfile.findMany({
       where,

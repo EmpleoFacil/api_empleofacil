@@ -4,7 +4,13 @@ import { CandidatesService } from './candidates.service';
 export declare class CandidatesController {
     private readonly candidatesService;
     constructor(candidatesService: CandidatesService);
-    getMe(user: AuthUser): Promise<{
+    getMe(user: AuthUser): Promise<({
+        user: {
+            id: string;
+            email: string | null;
+            phone: string | null;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -21,8 +27,14 @@ export declare class CandidatesController {
         educationLevel: string | null;
         profileCompletion: number;
         userId: string;
-    } | null>;
+    }) | null>;
     updateMe(user: AuthUser, dto: UpdateCandidateDto): Promise<{
+        user: {
+            id: string;
+            email: string | null;
+            phone: string | null;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;

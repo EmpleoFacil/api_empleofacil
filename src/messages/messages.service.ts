@@ -1,22 +1,31 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { MessagesGateway } from './messages.gateway';
 import { RespondMessageDto } from './dto/respond-message.dto';
 import { UpdateMessageStatusDto } from './dto/update-message-status.dto';
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly messagesGateway: MessagesGateway,
+  ) {}
 
   async create(user: AuthUser, dto: CreateMessageDto) {
-    const companyId = user.role === 'super_admin' ? dto.companyId : user.companyId;
+    const companyId =
+      user.role === 'super_admin' ? dto.companyId : user.companyId;
 
     if (!companyId) {
       throw new ForbiddenException('CompanyId requerido.');
     }
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         companyId,
         candidateId: dto.candidateId,
@@ -28,15 +37,34 @@ export class MessagesService {
         sentAt: new Date(),
       },
     });
+
+    this.messagesGateway.emitMessageCreated(message);
+    return message;
   }
 
-  listForCandidate(user: AuthUser) {
+  listForCandidate(user: AuthUser, filter?: string) {
     if (!user.candidateId) {
       throw new ForbiddenException('Usuario no es candidato.');
     }
 
+    const where: Record<string, unknown> = {
+      candidateId: user.candidateId,
+    };
+
+    if (filter == 'important') {
+      where.type = {
+        in: ['interview_invitation', 'document_request'],
+      };
+    }
+
+    if (filter == 'unread') {
+      where.status = {
+        in: ['sent', 'unread'],
+      };
+    }
+
     return this.prisma.message.findMany({
-      where: { candidateId: user.candidateId },
+      where,
       include: { company: true, application: true, responses: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -68,10 +96,13 @@ export class MessagesService {
       throw new ForbiddenException('No tienes acceso a este mensaje.');
     }
 
-    return this.prisma.message.update({
+    const updated = await this.prisma.message.update({
       where: { id },
       data: { status: 'read', readAt: new Date() },
     });
+
+    this.messagesGateway.emitMessageUpdated(updated);
+    return updated;
   }
 
   listForCompany(user: AuthUser) {
@@ -96,7 +127,12 @@ export class MessagesService {
   async getById(id: string, user: AuthUser) {
     const message = await this.prisma.message.findUnique({
       where: { id },
-      include: { company: true, candidate: true, application: true, responses: true },
+      include: {
+        company: true,
+        candidate: true,
+        application: true,
+        responses: true,
+      },
     });
 
     if (!message) {
@@ -138,9 +174,14 @@ export class MessagesService {
       },
     });
 
-    await this.prisma.message.update({
+    const updated = await this.prisma.message.update({
       where: { id: message.id },
       data: { status: 'responded', respondedAt: new Date() },
+    });
+
+    this.messagesGateway.emitMessageResponded({
+      ...updated,
+      response,
     });
 
     return { messageId: message.id, response };
@@ -157,13 +198,25 @@ export class MessagesService {
       throw new ForbiddenException('No tienes acceso a este mensaje.');
     }
 
-    return this.prisma.message.update({
+    const updated = await this.prisma.message.update({
       where: { id },
       data: { status: dto.status as any },
     });
+
+    this.messagesGateway.emitMessageUpdated(updated);
+    return updated;
   }
 
-  listForCompanyPaginated(user: AuthUser, params: { status?: string; candidateId?: string; search?: string; page?: number; limit?: number }) {
+  listForCompanyPaginated(
+    user: AuthUser,
+    params: {
+      status?: string;
+      candidateId?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
     const { status, candidateId, search, page = 1, limit = 20 } = params;
     const where: Record<string, unknown> = {};
 
@@ -181,7 +234,11 @@ export class MessagesService {
 
     return this.prisma.message.findMany({
       where,
-      include: { candidate: true, application: { include: { job: true } }, responses: true },
+      include: {
+        candidate: true,
+        application: { include: { job: true } },
+        responses: true,
+      },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
       take: limit,
@@ -199,10 +256,13 @@ export class MessagesService {
       throw new ForbiddenException('No tienes acceso a este mensaje.');
     }
 
-    return this.prisma.message.update({
+    const updated = await this.prisma.message.update({
       where: { id },
       data: { status: 'sent', sentAt: new Date() },
     });
+
+    this.messagesGateway.emitMessageUpdated(updated);
+    return updated;
   }
 
   getTemplates(user: AuthUser) {
@@ -210,10 +270,16 @@ export class MessagesService {
     if (user.role === 'company_admin' && user.companyId) {
       where.OR = [{ companyId: user.companyId }, { companyId: null }];
     }
-    return this.prisma.messageTemplate.findMany({ where, orderBy: { name: 'asc' } });
+    return this.prisma.messageTemplate.findMany({
+      where,
+      orderBy: { name: 'asc' },
+    });
   }
 
-  createTemplate(user: AuthUser, data: { name: string; subject: string; body: string; type?: string }) {
+  createTemplate(
+    user: AuthUser,
+    data: { name: string; subject: string; body: string; type?: string },
+  ) {
     return this.prisma.messageTemplate.create({
       data: {
         name: data.name,
@@ -225,19 +291,33 @@ export class MessagesService {
     });
   }
 
-  async updateTemplate(id: string, user: AuthUser, data: { name?: string; subject?: string; body?: string }) {
-    const template = await this.prisma.messageTemplate.findUnique({ where: { id } });
+  async updateTemplate(
+    id: string,
+    user: AuthUser,
+    data: { name?: string; subject?: string; body?: string },
+  ) {
+    const template = await this.prisma.messageTemplate.findUnique({
+      where: { id },
+    });
     if (!template) throw new NotFoundException('Plantilla no encontrada.');
-    if (user.role === 'company_admin' && template.companyId !== user.companyId) {
+    if (
+      user.role === 'company_admin' &&
+      template.companyId !== user.companyId
+    ) {
       throw new ForbiddenException('No tienes acceso a esta plantilla.');
     }
     return this.prisma.messageTemplate.update({ where: { id }, data });
   }
 
   async deleteTemplate(id: string, user: AuthUser) {
-    const template = await this.prisma.messageTemplate.findUnique({ where: { id } });
+    const template = await this.prisma.messageTemplate.findUnique({
+      where: { id },
+    });
     if (!template) throw new NotFoundException('Plantilla no encontrada.');
-    if (user.role === 'company_admin' && template.companyId !== user.companyId) {
+    if (
+      user.role === 'company_admin' &&
+      template.companyId !== user.companyId
+    ) {
       throw new ForbiddenException('No tienes acceso a esta plantilla.');
     }
     return this.prisma.messageTemplate.delete({ where: { id } });

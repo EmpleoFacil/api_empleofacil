@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthUser } from '../common/types/auth-user';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,7 +10,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 export declare class AuthService {
     private readonly prisma;
     private readonly jwtService;
-    constructor(prisma: PrismaService, jwtService: JwtService);
+    private readonly config;
+    constructor(prisma: PrismaService, jwtService: JwtService, config: ConfigService);
     registerCandidate(dto: RegisterCandidateDto): Promise<{
         accessToken: string;
         user: {
@@ -35,13 +37,18 @@ export declare class AuthService {
     recoverAccess(dto: RecoverAccessDto): Promise<{
         status: string;
         message: string;
-        recoveryId?: undefined;
-        expiresIn?: undefined;
-        deliveryMethod?: undefined;
     } | {
+        deliveryMethod: string;
+        debugCode?: undefined;
         recoveryId: string;
         expiresIn: number;
+        status?: undefined;
+        message?: undefined;
+    } | {
         deliveryMethod: string;
+        debugCode: string;
+        recoveryId: string;
+        expiresIn: number;
         status?: undefined;
         message?: undefined;
     }>;
@@ -91,4 +98,5 @@ export declare class AuthService {
         status: import(".prisma/client").$Enums.UserStatus;
     }) | null>;
     private buildAuthResponse;
+    private deliverRecoveryCode;
 }
