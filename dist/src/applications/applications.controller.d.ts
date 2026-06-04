@@ -1,7 +1,8 @@
 import type { AuthUser } from '../common/types/auth-user';
+import { ApplicationsService } from './applications.service';
+import { ApplicationNoteDto } from './dto/application-note.dto';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
-import { ApplicationsService } from './applications.service';
 export declare class ApplicationsController {
     private readonly applicationsService;
     constructor(applicationsService: ApplicationsService);
@@ -281,13 +282,24 @@ export declare class ApplicationsController {
             modality: string | null;
             categoryId: string | null;
         };
-        notes: {
+        notes: ({
+            author: {
+                id: string;
+                email: string | null;
+            };
+            updatedBy: {
+                id: string;
+                email: string | null;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
+            updatedAt: Date;
             applicationId: string;
             note: string;
             authorUserId: string;
-        }[];
+            updatedByUserId: string | null;
+        })[];
     } & {
         id: string;
         updatedAt: Date;
@@ -304,11 +316,40 @@ export declare class ApplicationsController {
         jobId: string;
         candidateId: string;
     }>;
-    addNote(id: string, content: string, user: AuthUser): Promise<{
+    addNote(id: string, dto: ApplicationNoteDto, user: AuthUser): Promise<{
+        author: {
+            id: string;
+            email: string | null;
+        };
+        updatedBy: {
+            id: string;
+            email: string | null;
+        } | null;
+    } & {
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         applicationId: string;
         note: string;
         authorUserId: string;
+        updatedByUserId: string | null;
+    }>;
+    updateNote(id: string, noteId: string, dto: ApplicationNoteDto, user: AuthUser): Promise<{
+        author: {
+            id: string;
+            email: string | null;
+        };
+        updatedBy: {
+            id: string;
+            email: string | null;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        applicationId: string;
+        note: string;
+        authorUserId: string;
+        updatedByUserId: string | null;
     }>;
 }

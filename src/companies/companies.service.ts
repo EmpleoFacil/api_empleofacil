@@ -95,7 +95,7 @@ export class CompaniesService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [jobsThisMonth, totalJobs, visibleCandidates] = await Promise.all([
+    const [jobsThisMonth, totalJobs, visibleCandidates, usersCount] = await Promise.all([
       this.prisma.job.count({
         where: { companyId: user.companyId, createdAt: { gte: startOfMonth } },
       }),
@@ -103,10 +103,12 @@ export class CompaniesService {
       this.prisma.application.count({
         where: { job: { companyId: user.companyId }, status: { not: 'rejected' } },
       }),
+      this.prisma.companyUser.count({ where: { companyId: user.companyId } }),
     ]);
 
     const pubLimit = company.plan?.publicationLimit ?? 5;
     const candLimit = company.plan?.visibleCandidatesLimit ?? 100;
+    const userLimit = (company.plan as any)?.userLimit ?? 3;
 
     return {
       plan: {
@@ -119,6 +121,11 @@ export class CompaniesService {
       },
       usage: {
         jobsThisMonth,
+        jobs: { current: totalJobs, max: pubLimit },
+        users: { current: usersCount, max: userLimit },
+        candidates: { current: visibleCandidates, max: candLimit },
+        activeJobs: { current: totalJobs, max: pubLimit },
+        visibleCandidates: { current: visibleCandidates, max: candLimit },
       },
     };
   }

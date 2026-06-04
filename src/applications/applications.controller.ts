@@ -1,13 +1,23 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { AuthUser } from '../common/types/auth-user';
+import { ApplicationsService } from './applications.service';
+import { ApplicationNoteDto } from './dto/application-note.dto';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
-import { ApplicationsService } from './applications.service';
 
 @ApiTags('applications')
 @ApiBearerAuth()
@@ -42,7 +52,10 @@ export class ApplicationsController {
 
   @Get('job/:jobId/me')
   @Roles('candidate')
-  getByJobForCandidate(@Param('jobId') jobId: string, @CurrentUser() user: AuthUser) {
+  getByJobForCandidate(
+    @Param('jobId') jobId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.applicationsService.getByJobForCandidate(jobId, user);
   }
 
@@ -60,7 +73,10 @@ export class ApplicationsController {
 
   @Get('company/export')
   @Roles('company_admin', 'super_admin')
-  exportForCompany(@CurrentUser() user: AuthUser, @Query('jobId') jobId?: string) {
+  exportForCompany(
+    @CurrentUser() user: AuthUser,
+    @Query('jobId') jobId?: string,
+  ) {
     return this.applicationsService.exportForCompany(user, jobId);
   }
 
@@ -75,7 +91,9 @@ export class ApplicationsController {
     @Query('limit') limit?: string,
   ) {
     return this.applicationsService.listForCompanyPaginated(user, {
-      search, jobId, status,
+      search,
+      jobId,
+      status,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 20,
     });
@@ -101,9 +119,20 @@ export class ApplicationsController {
   @Roles('company_admin', 'super_admin')
   addNote(
     @Param('id') id: string,
-    @Body('content') content: string,
+    @Body() dto: ApplicationNoteDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.applicationsService.addNote(id, user, content);
+    return this.applicationsService.addNote(id, user, dto.content);
+  }
+
+  @Patch(':id/notes/:noteId')
+  @Roles('company_admin', 'super_admin')
+  updateNote(
+    @Param('id') id: string,
+    @Param('noteId') noteId: string,
+    @Body() dto: ApplicationNoteDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.applicationsService.updateNote(id, noteId, user, dto.content);
   }
 }

@@ -5,6 +5,7 @@ import { UpdateApplicationStatusDto } from './dto/update-application-status.dto'
 export declare class ApplicationsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
+    private readonly noteInclude;
     create(user: AuthUser, dto: CreateApplicationDto): Promise<{
         id: string;
         updatedAt: Date;
@@ -185,13 +186,24 @@ export declare class ApplicationsService {
             modality: string | null;
             categoryId: string | null;
         };
-        notes: {
+        notes: ({
+            author: {
+                id: string;
+                email: string | null;
+            };
+            updatedBy: {
+                id: string;
+                email: string | null;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
+            updatedAt: Date;
             applicationId: string;
             note: string;
             authorUserId: string;
-        }[];
+            updatedByUserId: string | null;
+        })[];
     } & {
         id: string;
         updatedAt: Date;
@@ -340,11 +352,40 @@ export declare class ApplicationsService {
         };
     }>;
     addNote(id: string, user: AuthUser, content: string): Promise<{
+        author: {
+            id: string;
+            email: string | null;
+        };
+        updatedBy: {
+            id: string;
+            email: string | null;
+        } | null;
+    } & {
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         applicationId: string;
         note: string;
         authorUserId: string;
+        updatedByUserId: string | null;
+    }>;
+    updateNote(applicationId: string, noteId: string, user: AuthUser, content: string): Promise<{
+        author: {
+            id: string;
+            email: string | null;
+        };
+        updatedBy: {
+            id: string;
+            email: string | null;
+        } | null;
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        applicationId: string;
+        note: string;
+        authorUserId: string;
+        updatedByUserId: string | null;
     }>;
     exportForCompany(user: AuthUser, jobId?: string): Promise<({
         candidate: {

@@ -115,7 +115,8 @@ model User {
 
   candidateProfile  CandidateProfile?
   companyUsers      CompanyUser[]
-  applicationNotes  ApplicationNote[]
+  applicationNotesAuthored ApplicationNote[] @relation("ApplicationNoteAuthor")
+  applicationNotesEdited   ApplicationNote[] @relation("ApplicationNoteEditor")
   interviewResults  InterviewResult[]
   activityLogs      ActivityLog[]
   passwordRecoveries PasswordRecovery[]
@@ -288,11 +289,15 @@ model ApplicationNote {
   authorUserId  String
   note          String
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  updatedByUserId String?
 
   application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  author      User        @relation(fields: [authorUserId], references: [id])
+  author      User        @relation("ApplicationNoteAuthor", fields: [authorUserId], references: [id])
+  updatedBy   User?       @relation("ApplicationNoteEditor", fields: [updatedByUserId], references: [id])
 
   @@index([applicationId])
+  @@index([updatedByUserId])
 }
 
 model SavedJob {

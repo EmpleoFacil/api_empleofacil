@@ -17,6 +17,20 @@ let ApplicationsService = class ApplicationsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    noteInclude = {
+        author: {
+            select: {
+                id: true,
+                email: true,
+            },
+        },
+        updatedBy: {
+            select: {
+                id: true,
+                email: true,
+            },
+        },
+    };
     async create(user, dto) {
         if (!user.candidateId) {
             throw new common_1.ForbiddenException('Usuario no es candidato.');
@@ -26,7 +40,9 @@ let ApplicationsService = class ApplicationsService {
             throw new common_1.NotFoundException('Vacante no disponible.');
         }
         const existing = await this.prisma.application.findUnique({
-            where: { jobId_candidateId: { jobId: dto.jobId, candidateId: user.candidateId } },
+            where: {
+                jobId_candidateId: { jobId: dto.jobId, candidateId: user.candidateId },
+            },
         });
         if (existing) {
             return existing;
@@ -62,13 +78,17 @@ let ApplicationsService = class ApplicationsService {
                 candidate: true,
                 interviews: { orderBy: { date: 'asc' } },
                 messages: { orderBy: { createdAt: 'desc' } },
-                notes: { orderBy: { createdAt: 'desc' } },
+                notes: {
+                    orderBy: { createdAt: 'desc' },
+                    include: this.noteInclude,
+                },
             },
         });
         if (!application) {
             throw new common_1.NotFoundException('Postulación no encontrada.');
         }
-        if (user.role === 'candidate' && user.candidateId !== application.candidateId) {
+        if (user.role === 'candidate' &&
+            user.candidateId !== application.candidateId) {
             throw new common_1.ForbiddenException('No tienes acceso a esta postulación.');
         }
         return application;
@@ -97,10 +117,12 @@ let ApplicationsService = class ApplicationsService {
         });
         const summary = {
             total: applications.length,
-            enRevision: applications.filter(a => a.status === 'applied' || a.status === 'reviewing').length,
-            entrevista: applications.filter(a => a.status === 'interview_scheduled' || a.status === 'interview_confirmed').length,
-            noSeleccionado: applications.filter(a => a.status === 'rejected').length,
-            postulado: applications.filter(a => a.status === 'applied').length,
+            enRevision: applications.filter((a) => a.status === 'applied' || a.status === 'reviewing').length,
+            entrevista: applications.filter((a) => a.status === 'interview_scheduled' ||
+                a.status === 'interview_confirmed').length,
+            noSeleccionado: applications.filter((a) => a.status === 'rejected')
+                .length,
+            postulado: applications.filter((a) => a.status === 'applied').length,
         };
         return summary;
     }
@@ -113,7 +135,7 @@ let ApplicationsService = class ApplicationsService {
             select: { status: true },
         });
         return {
-            enRevision: applications.filter(a => a.status === 'applied' || a.status === 'reviewing').length,
+            enRevision: applications.filter((a) => a.status === 'applied' || a.status === 'reviewing').length,
         };
     }
     listForCompany(user) {
@@ -140,7 +162,8 @@ let ApplicationsService = class ApplicationsService {
         if (!application) {
             throw new common_1.NotFoundException('Postulación no encontrada.');
         }
-        if (user.role === 'company_admin' && user.companyId !== application.job.companyId) {
+        if (user.role === 'company_admin' &&
+            user.companyId !== application.job.companyId) {
             throw new common_1.ForbiddenException('No tienes acceso a esta postulación.');
         }
         return this.prisma.application.update({
@@ -153,15 +176,25 @@ let ApplicationsService = class ApplicationsService {
             throw new common_1.ForbiddenException('Usuario sin empresa asignada.');
         }
         const companyId = user.companyId;
-        const baseWhere = user.role === 'super_admin' ? {} : { job: { companyId: companyId } };
-        const apps = await this.prisma.application.findMany({ where: baseWhere, select: { status: true } });
+        const baseWhere = user.role === 'super_admin'
+            ? {}
+            : { job: { companyId: companyId } };
+        const apps = await this.prisma.application.findMany({
+            where: baseWhere,
+            select: { status: true },
+        });
         return {
             total: { value: apps.length },
-            nuevo: { value: apps.filter(a => a.status === 'applied').length },
-            enRevision: { value: apps.filter(a => a.status === 'reviewing').length },
-            entrevista: { value: apps.filter(a => a.status === 'interview_scheduled' || a.status === 'interview_confirmed').length },
-            descartado: { value: apps.filter(a => a.status === 'rejected').length },
-            contratado: { value: apps.filter(a => a.status === 'hired').length },
+            nuevo: { value: apps.filter((a) => a.status === 'applied').length },
+            enRevision: {
+                value: apps.filter((a) => a.status === 'reviewing').length,
+            },
+            entrevista: {
+                value: apps.filter((a) => a.status === 'interview_scheduled' ||
+                    a.status === 'interview_confirmed').length,
+            },
+            descartado: { value: apps.filter((a) => a.status === 'rejected').length },
+            contratado: { value: apps.filter((a) => a.status === 'hired').length },
         };
     }
     async getPipeline(user, jobId) {
@@ -169,7 +202,9 @@ let ApplicationsService = class ApplicationsService {
             throw new common_1.ForbiddenException('Usuario sin empresa asignada.');
         }
         const companyId = user.companyId;
-        const baseWhere = user.role === 'super_admin' ? {} : { job: { companyId: companyId } };
+        const baseWhere = user.role === 'super_admin'
+            ? {}
+            : { job: { companyId: companyId } };
         const where = jobId ? { ...baseWhere, jobId } : baseWhere;
         const apps = await this.prisma.application.findMany({
             where,
@@ -179,9 +214,16 @@ let ApplicationsService = class ApplicationsService {
             },
             orderBy: { appliedAt: 'desc' },
         });
-        const statuses = ['applied', 'reviewing', 'interview_scheduled', 'rejected'];
+        const statuses = [
+            'applied',
+            'reviewing',
+            'interview_scheduled',
+            'rejected',
+        ];
         const pipeline = {};
-        statuses.forEach(s => { pipeline[s] = apps.filter(a => a.status === s); });
+        statuses.forEach((s) => {
+            pipeline[s] = apps.filter((a) => a.status === s);
+        });
         return pipeline;
     }
     async listForCompanyPaginated(user, params) {
@@ -190,7 +232,9 @@ let ApplicationsService = class ApplicationsService {
         }
         const { search, jobId, status, page = 1, limit = 20 } = params;
         const companyId = user.companyId;
-        const baseWhere = user.role === 'super_admin' ? {} : { job: { companyId: companyId } };
+        const baseWhere = user.role === 'super_admin'
+            ? {}
+            : { job: { companyId: companyId } };
         const where = { ...baseWhere };
         if (jobId)
             where.jobId = jobId;
@@ -225,7 +269,8 @@ let ApplicationsService = class ApplicationsService {
         if (!application) {
             throw new common_1.NotFoundException('Postulación no encontrada.');
         }
-        if (user.role === 'company_admin' && user.companyId !== application.job.companyId) {
+        if (user.role === 'company_admin' &&
+            user.companyId !== application.job.companyId) {
             throw new common_1.ForbiddenException('No tienes acceso a esta postulación.');
         }
         return this.prisma.applicationNote.create({
@@ -234,6 +279,32 @@ let ApplicationsService = class ApplicationsService {
                 authorUserId: user.id,
                 note: content,
             },
+            include: this.noteInclude,
+        });
+    }
+    async updateNote(applicationId, noteId, user, content) {
+        const note = await this.prisma.applicationNote.findUnique({
+            where: { id: noteId },
+            include: {
+                application: {
+                    include: { job: true },
+                },
+            },
+        });
+        if (!note || note.applicationId !== applicationId) {
+            throw new common_1.NotFoundException('Nota no encontrada.');
+        }
+        if (user.role === 'company_admin' &&
+            user.companyId !== note.application.job.companyId) {
+            throw new common_1.ForbiddenException('No tienes acceso a esta nota.');
+        }
+        return this.prisma.applicationNote.update({
+            where: { id: noteId },
+            data: {
+                note: content,
+                updatedByUserId: user.id,
+            },
+            include: this.noteInclude,
         });
     }
     async exportForCompany(user, jobId) {
@@ -241,7 +312,9 @@ let ApplicationsService = class ApplicationsService {
             throw new common_1.ForbiddenException('Usuario sin empresa asignada.');
         }
         const companyId = user.companyId;
-        const baseWhere = user.role === 'super_admin' ? {} : { job: { companyId: companyId } };
+        const baseWhere = user.role === 'super_admin'
+            ? {}
+            : { job: { companyId: companyId } };
         const where = jobId ? { ...baseWhere, jobId } : baseWhere;
         return this.prisma.application.findMany({
             where,

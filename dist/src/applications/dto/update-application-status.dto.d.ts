@@ -1,3 +1,4 @@
+import { ApplicationStatus } from '@prisma/client';
 export declare class UpdateApplicationStatusDto {
-    status: string;
+    status: ApplicationStatus;
 }

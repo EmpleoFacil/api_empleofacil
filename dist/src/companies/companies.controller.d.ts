@@ -41,6 +41,26 @@ export declare class CompaniesController {
         };
         usage: {
             jobsThisMonth: number;
+            jobs: {
+                current: number;
+                max: number;
+            };
+            users: {
+                current: number;
+                max: any;
+            };
+            candidates: {
+                current: number;
+                max: number;
+            };
+            activeJobs: {
+                current: number;
+                max: number;
+            };
+            visibleCandidates: {
+                current: number;
+                max: number;
+            };
         };
     }>;
     getMe(user: AuthUser): Promise<({

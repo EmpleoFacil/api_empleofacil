@@ -10,14 +10,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateApplicationStatusDto = void 0;
+const client_1 = require("@prisma/client");
 const class_validator_1 = require("class-validator");
 class UpdateApplicationStatusDto {
     status;
 }
 exports.UpdateApplicationStatusDto = UpdateApplicationStatusDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsEnum)(client_1.ApplicationStatus),
     __metadata("design:type", String)
 ], UpdateApplicationStatusDto.prototype, "status", void 0);
 //# sourceMappingURL=update-application-status.dto.js.map
