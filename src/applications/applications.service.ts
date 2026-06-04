@@ -19,12 +19,6 @@ export class ApplicationsService {
         email: true,
       },
     },
-    updatedBy: {
-      select: {
-        id: true,
-        email: true,
-      },
-    },
   } as const;
 
   async create(user: AuthUser, dto: CreateApplicationDto) {
@@ -349,7 +343,6 @@ export class ApplicationsService {
         authorUserId: user.id,
         note: content,
       },
-      include: this.noteInclude,
     });
   }
 
@@ -383,7 +376,6 @@ export class ApplicationsService {
       where: { id: noteId },
       data: {
         note: content,
-        updatedByUserId: user.id,
       },
       include: this.noteInclude,
     });

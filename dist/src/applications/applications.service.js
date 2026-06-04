@@ -24,12 +24,6 @@ let ApplicationsService = class ApplicationsService {
                 email: true,
             },
         },
-        updatedBy: {
-            select: {
-                id: true,
-                email: true,
-            },
-        },
     };
     async create(user, dto) {
         if (!user.candidateId) {
@@ -279,7 +273,6 @@ let ApplicationsService = class ApplicationsService {
                 authorUserId: user.id,
                 note: content,
             },
-            include: this.noteInclude,
         });
     }
     async updateNote(applicationId, noteId, user, content) {
@@ -302,7 +295,6 @@ let ApplicationsService = class ApplicationsService {
             where: { id: noteId },
             data: {
                 note: content,
-                updatedByUserId: user.id,
             },
             include: this.noteInclude,
         });
