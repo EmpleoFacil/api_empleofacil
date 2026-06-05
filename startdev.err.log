@@ -63,3 +63,396 @@ Node.js v24.13.0
 [31m[Nest] 7524  - [39m04/06/2026, 2:18:32 p. m. [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +3ms[39m
 [31m[Nest] 12336  - [39m04/06/2026, 3:05:50 p. m. [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +2ms[39m
 [31m[Nest] 49676  - [39m04/06/2026, 4:10:20 p. m. [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +8ms[39m
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.findMany()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:218:23
+
+  215 }
+  216 
+  217 const [items, total] = await Promise.all([
+→ 218   this.prisma.job.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 0)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:228:23
+
+  225   take: limit,
+  226   orderBy: { createdAt: 'desc' },
+  227 }),
+→ 228 this.prisma.job.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.findMany()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:218:23
+
+  215 }
+  216 
+  217 const [items, total] = await Promise.all([
+→ 218   this.prisma.job.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 0)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:228:23
+
+  225   take: limit,
+  226   orderBy: { createdAt: 'desc' },
+  227 }),
+→ 228 this.prisma.job.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.candidateProfile.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\dashboard\dashboard.service.ts:75:36
+
+  72 
+  73 const [companies, candidates, jobs, applications, documentsPending, companiesPrev, candidatesPrev] = await Promise.all([
+  74   this.prisma.company.count(),
+→ 75   this.prisma.candidateProfile.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async DashboardService.getAdminDashboard [90m(C:\Users\jahir\api_empleofacil\[39msrc\dashboard\dashboard.service.ts:73:106[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'CandidateProfile'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.findMany()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:218:23
+
+  215 }
+  216 
+  217 const [items, total] = await Promise.all([
+→ 218   this.prisma.job.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 0)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.findUnique()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:257:39
+
+  254 }
+  255 
+  256 async getById(id: string, user: AuthUser) {
+→ 257   const job = await this.prisma.job.findUnique(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async JobsService.getById [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:257:17[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.application.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\dashboard\dashboard.service.ts:22:31
+
+  19 const [activeJobs, totalApplications, interviewsWeek, messagesUnread,
+  20        recentJobs, upcomingInterviews, recentMessages, company] = await Promise.all([
+  21   this.prisma.job.count({ where: { companyId, status: 'active' } }),
+→ 22   this.prisma.application.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async DashboardService.getCompanyDashboard [90m(C:\Users\jahir\api_empleofacil\[39msrc\dashboard\dashboard.service.ts:20:71[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Application'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.jobCategory.findMany()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:12:36
+
+   9 constructor(private readonly prisma: PrismaService) {}
+  10 
+  11 getCategories() {
+→ 12   return this.prisma.jobCategory.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'JobCategory'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.application.findMany()` invocation in
+C:\Users\jahir\api_empleofacil\src\applications\applications.service.ts:304:31
+
+  301 }
+  302 
+  303 const [applications, total] = await Promise.all([
+→ 304   this.prisma.application.findMany(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 0)
+    at async ApplicationsService.listForCompanyPaginated [90m(C:\Users\jahir\api_empleofacil\[39msrc\applications\applications.service.ts:303:35[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Application'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.company.findUnique()` invocation in
+C:\Users\jahir\api_empleofacil\src\companies\companies.service.ts:86:47
+
+  83   throw new ForbiddenException('Usuario sin empresa asignada.');
+  84 }
+  85 
+→ 86 const company = await this.prisma.company.findUnique(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async CompaniesService.getPlanLimits [90m(C:\Users\jahir\api_empleofacil\[39msrc\companies\companies.service.ts:86:21[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Company'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:228:23
+
+  225   take: limit,
+  226   orderBy: { createdAt: 'desc' },
+  227 }),
+→ 228 this.prisma.job.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:228:23
+
+  225   take: limit,
+  226   orderBy: { createdAt: 'desc' },
+  227 }),
+→ 228 this.prisma.job.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.job.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\jobs\jobs.service.ts:228:23
+
+  225   take: limit,
+  226   orderBy: { createdAt: 'desc' },
+  227 }),
+→ 228 this.prisma.job.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 1)
+    at async JobsService.getAdminJobs [90m(C:\Users\jahir\api_empleofacil\[39msrc\jobs\jobs.service.ts:217:28[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Job'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 54576  - [39m05/06/2026, 5:52:42 a. m. [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39mPrismaClientKnownRequestError: 
+Invalid `this.prisma.company.count()` invocation in
+C:\Users\jahir\api_empleofacil\src\dashboard\dashboard.service.ts:79:27
+
+  76 this.prisma.job.count({ where: { status: 'active' } }),
+  77 this.prisma.application.count(),
+  78 this.prisma.candidateDocument.count({ where: { status: { in: ['pending', 'uploaded'] } } }),
+→ 79 this.prisma.company.count(
+Timed out fetching a new connection from the connection pool. More info: http://pris.ly/d/connection-pool (Current connection pool timeout: 10, connection limit: 25)
+    at $n.handleRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:7315[90m)[39m
+    at $n.handleAndLogRequestError [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6623[90m)[39m
+    at $n.request [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:121:6307[90m)[39m
+    at async l [90m(C:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@prisma\client[24m\runtime\library.js:130:9633[90m)[39m
+    at async Promise.all (index 5)
+    at async DashboardService.getAdminDashboard [90m(C:\Users\jahir\api_empleofacil\[39msrc\dashboard\dashboard.service.ts:73:106[90m)[39m
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-execution-context.js:46:28
+    at async [90mC:\Users\jahir\api_empleofacil\[39mnode_modules\[4m@nestjs\core[24m\router\router-proxy.js:9:17 {
+  code: [32m'P2024'[39m,
+  clientVersion: [32m'5.22.0'[39m,
+  meta: {
+    modelName: [32m'Company'[39m,
+    connection_limit: [33m25[39m,
+    timeout: [33m10[39m
+  }
+}
+[31m[Nest] 19728  - [39m05/06/2026, 5:52:51 a. m. [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +7ms[39m
+node:net:1940
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3001
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at ExpressAdapter.listen (C:\Users\jahir\api_empleofacil\node_modules\@nestjs\platform-express\adapters\express-adapter.js:115:32)
+    at C:\Users\jahir\api_empleofacil\node_modules\@nestjs\core\nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (C:\Users\jahir\api_empleofacil\node_modules\@nestjs\core\nest-application.js:178:16)
+    at async bootstrap (C:\Users\jahir\api_empleofacil\src\main.ts:23:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3001
+}
+
+Node.js v24.13.0
