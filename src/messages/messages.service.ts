@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/types/auth-user';
+import { assertNoOffensiveContent } from '../common/utils/text-moderation';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessagesGateway } from './messages.gateway';
 import { RespondMessageDto } from './dto/respond-message.dto';
@@ -18,6 +19,11 @@ export class MessagesService {
   ) {}
 
   async create(user: AuthUser, dto: CreateMessageDto) {
+    assertNoOffensiveContent([
+      { label: 'asunto', value: dto.title },
+      { label: 'mensaje', value: dto.body },
+    ]);
+
     const companyId =
       user.role === 'super_admin' ? dto.companyId : user.companyId;
 
@@ -151,6 +157,8 @@ export class MessagesService {
   }
 
   async respond(id: string, dto: RespondMessageDto, user: AuthUser) {
+    assertNoOffensiveContent([{ label: 'respuesta', value: dto.body }]);
+
     if (!user.candidateId) {
       throw new ForbiddenException('Usuario no es candidato.');
     }
@@ -280,6 +288,12 @@ export class MessagesService {
     user: AuthUser,
     data: { name: string; subject: string; body: string; type?: string },
   ) {
+    assertNoOffensiveContent([
+      { label: 'nombre de plantilla', value: data.name },
+      { label: 'asunto de plantilla', value: data.subject },
+      { label: 'contenido de plantilla', value: data.body },
+    ]);
+
     return this.prisma.messageTemplate.create({
       data: {
         name: data.name,
@@ -296,6 +310,12 @@ export class MessagesService {
     user: AuthUser,
     data: { name?: string; subject?: string; body?: string },
   ) {
+    assertNoOffensiveContent([
+      { label: 'nombre de plantilla', value: data.name },
+      { label: 'asunto de plantilla', value: data.subject },
+      { label: 'contenido de plantilla', value: data.body },
+    ]);
+
     const template = await this.prisma.messageTemplate.findUnique({
       where: { id },
     });

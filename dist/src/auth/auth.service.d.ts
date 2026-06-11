@@ -18,6 +18,7 @@ export declare class AuthService {
             id: string;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             role: string;
             candidateId: string | null;
             companyId: string | null;
@@ -29,6 +30,7 @@ export declare class AuthService {
             id: string;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             role: string;
             candidateId: string | null;
             companyId: string | null;
@@ -93,6 +95,7 @@ export declare class AuthService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         passwordHash: string | null;
         role: import(".prisma/client").$Enums.UserRole;
         status: import(".prisma/client").$Enums.UserStatus;

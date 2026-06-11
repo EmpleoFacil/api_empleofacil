@@ -30,9 +30,11 @@ export class AuthService {
 
     const existing = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: dto.email ?? '' }, { phone: dto.phone ?? '' }].filter(
-          (c) => Object.values(c).some(Boolean),
-        ) as any,
+        OR: [
+          { email: dto.email ?? '' },
+          { phone: dto.phone ?? '' },
+          { secondaryPhone: dto.secondaryPhone ?? '' },
+        ].filter((c) => Object.values(c).some(Boolean)) as any,
       },
     });
 
@@ -46,6 +48,7 @@ export class AuthService {
       data: {
         email: dto.email,
         phone: dto.phone,
+        secondaryPhone: dto.secondaryPhone,
         passwordHash,
         role: 'candidate' as any,
         candidateProfile: {
@@ -203,6 +206,7 @@ export class AuthService {
       id: string;
       email: string | null;
       phone: string | null;
+      secondaryPhone?: string | null;
       role: string;
     },
     candidateId: string | null,
@@ -221,6 +225,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         phone: user.phone,
+        secondaryPhone: user.secondaryPhone ?? null,
         role: user.role,
         candidateId,
         companyId,

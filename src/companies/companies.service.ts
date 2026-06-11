@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../common/types/auth-user';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -51,6 +55,7 @@ export class CompaniesService {
         legalName: dto.legalName,
         email: dto.email,
         phone: dto.phone,
+        secondaryPhone: dto.secondaryPhone,
         country: dto.country,
         city: dto.city,
         status: (dto.status ?? 'active') as any,
@@ -60,7 +65,9 @@ export class CompaniesService {
 
   async update(id: string, dto: UpdateCompanyDto, user: AuthUser) {
     if (user.role !== 'super_admin' && user.companyId !== id) {
-      throw new ForbiddenException('No tienes permisos para modificar esta empresa.');
+      throw new ForbiddenException(
+        'No tienes permisos para modificar esta empresa.',
+      );
     }
 
     return this.prisma.company.update({
@@ -71,6 +78,7 @@ export class CompaniesService {
         legalName: dto.legalName,
         email: dto.email,
         phone: dto.phone,
+        secondaryPhone: dto.secondaryPhone,
         country: dto.country,
         city: dto.city,
         status: dto.status as any,
@@ -95,16 +103,25 @@ export class CompaniesService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [jobsThisMonth, totalJobs, visibleCandidates, usersCount] = await Promise.all([
-      this.prisma.job.count({
-        where: { companyId: user.companyId, createdAt: { gte: startOfMonth } },
-      }),
-      this.prisma.job.count({ where: { companyId: user.companyId, status: 'active' } }),
-      this.prisma.application.count({
-        where: { job: { companyId: user.companyId }, status: { not: 'rejected' } },
-      }),
-      this.prisma.companyUser.count({ where: { companyId: user.companyId } }),
-    ]);
+    const [jobsThisMonth, totalJobs, visibleCandidates, usersCount] =
+      await Promise.all([
+        this.prisma.job.count({
+          where: {
+            companyId: user.companyId,
+            createdAt: { gte: startOfMonth },
+          },
+        }),
+        this.prisma.job.count({
+          where: { companyId: user.companyId, status: 'active' },
+        }),
+        this.prisma.application.count({
+          where: {
+            job: { companyId: user.companyId },
+            status: { not: 'rejected' },
+          },
+        }),
+        this.prisma.companyUser.count({ where: { companyId: user.companyId } }),
+      ]);
 
     const pubLimit = company.plan?.publicationLimit ?? 5;
     const candLimit = company.plan?.visibleCandidatesLimit ?? 100;
@@ -116,8 +133,16 @@ export class CompaniesService {
         id: company.planId,
       },
       limits: {
-        activeJobs: { current: totalJobs, max: pubLimit, remaining: Math.max(0, pubLimit - totalJobs) },
-        visibleCandidates: { current: visibleCandidates, max: candLimit, remaining: Math.max(0, candLimit - visibleCandidates) },
+        activeJobs: {
+          current: totalJobs,
+          max: pubLimit,
+          remaining: Math.max(0, pubLimit - totalJobs),
+        },
+        visibleCandidates: {
+          current: visibleCandidates,
+          max: candLimit,
+          remaining: Math.max(0, candLimit - visibleCandidates),
+        },
       },
       usage: {
         jobsThisMonth,
@@ -142,6 +167,10 @@ export class CompaniesService {
     return mapping[role] ?? 'viewer';
   }
 
+  private resolveCompanyRole(data: { role?: string; companyRole?: string }) {
+    return data.companyRole ?? data.role ?? 'viewer';
+  }
+
   private slugify(value: string) {
     return value
       .toLowerCase()
@@ -161,7 +190,19 @@ export class CompaniesService {
     });
   }
 
-  async updateMe(user: AuthUser, data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; logoUrl?: string }) {
+  async updateMe(
+    user: AuthUser,
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      secondaryPhone?: string;
+      city?: string;
+      address?: string;
+      website?: string;
+      logoUrl?: string;
+    },
+  ) {
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
@@ -171,6 +212,9 @@ export class CompaniesService {
         ...(data.name && { name: data.name }),
         ...(data.email && { email: data.email }),
         ...(data.phone && { phone: data.phone }),
+        ...(data.secondaryPhone !== undefined
+          ? { secondaryPhone: data.secondaryPhone || null }
+          : {}),
         ...(data.city && { city: data.city }),
         ...(data.address && { address: data.address }),
         ...(data.website && { website: data.website }),
@@ -186,7 +230,9 @@ export class CompaniesService {
 
     const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
     if (!allowed.includes(file.mimetype)) {
-      throw new ForbiddenException('Formato no permitido. Usa PNG, JPG o WEBP.');
+      throw new ForbiddenException(
+        'Formato no permitido. Usa PNG, JPG o WEBP.',
+      );
     }
 
     if (file.size > 2 * 1024 * 1024) {
@@ -195,7 +241,11 @@ export class CompaniesService {
 
     const ext = file.originalname.split('.').pop()?.toLowerCase() || 'png';
     const fileName = `logo-${Date.now()}.${ext}`;
-    const logoUrl = await this.storage.upload(file, fileName, `companies/${user.companyId}`);
+    const logoUrl = await this.storage.upload(
+      file,
+      fileName,
+      `companies/${user.companyId}`,
+    );
 
     await this.prisma.company.update({
       where: { id: user.companyId },
@@ -211,21 +261,44 @@ export class CompaniesService {
     }
     const companyUsers = await this.prisma.companyUser.findMany({
       where: { companyId: user.companyId },
-      include: { user: { select: { id: true, email: true, role: true, status: true, createdAt: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            secondaryPhone: true,
+            role: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'asc' },
     });
-    return companyUsers.map(cu => ({ ...cu.user, companyRole: cu.role }));
+    return companyUsers.map((cu) => ({ ...cu.user, companyRole: cu.role }));
   }
 
-  async createUser(user: AuthUser, data: { email: string; role: string; password: string }) {
+  async createUser(
+    user: AuthUser,
+    data: {
+      email: string;
+      role?: string;
+      companyRole?: string;
+      password: string;
+      secondaryPhone?: string;
+    },
+  ) {
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
     const passwordHash = await bcrypt.hash(data.password, 10);
+    const companyRole = this.resolveCompanyRole(data);
 
     const newUser = await this.prisma.user.create({
       data: {
         email: data.email,
+        secondaryPhone: data.secondaryPhone?.trim() || null,
         role: 'company_admin',
         passwordHash,
         status: 'active',
@@ -236,14 +309,30 @@ export class CompaniesService {
       data: {
         companyId: user.companyId,
         userId: newUser.id,
-        role: this.mapCompanyRole(data.role) as any,
+        role: this.mapCompanyRole(companyRole) as any,
       },
     });
 
-    return { id: newUser.id, email: newUser.email, role: newUser.role, status: newUser.status, companyRole: data.role };
+    return {
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      status: newUser.status,
+      companyRole,
+      secondaryPhone: newUser.secondaryPhone,
+    };
   }
 
-  async updateUser(user: AuthUser, userId: string, data: { role?: string; status?: string }) {
+  async updateUser(
+    user: AuthUser,
+    userId: string,
+    data: {
+      role?: string;
+      companyRole?: string;
+      status?: string;
+      secondaryPhone?: string;
+    },
+  ) {
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
@@ -254,17 +343,24 @@ export class CompaniesService {
       throw new ForbiddenException('No tienes acceso a este usuario.');
     }
 
-    if (data.role) {
+    const companyRole = this.resolveCompanyRole(data);
+
+    if (data.role || data.companyRole) {
       await this.prisma.companyUser.update({
         where: { id: companyUser.id },
-        data: { role: this.mapCompanyRole(data.role) as any },
+        data: { role: this.mapCompanyRole(companyRole) as any },
       });
     }
 
-    if (data.status) {
+    if (data.status || data.secondaryPhone !== undefined) {
       await this.prisma.user.update({
         where: { id: userId },
-        data: { status: data.status as any },
+        data: {
+          ...(data.status ? { status: data.status as any } : {}),
+          ...(data.secondaryPhone !== undefined
+            ? { secondaryPhone: data.secondaryPhone?.trim() || null }
+            : {}),
+        },
       });
     }
 
@@ -272,7 +368,14 @@ export class CompaniesService {
       where: { id: companyUser.id },
       include: { user: true },
     });
-    return { id: updated?.user.id, email: updated?.user.email, role: updated?.user.role, status: updated?.user.status, companyRole: updated?.role };
+    return {
+      id: updated?.user.id,
+      email: updated?.user.email,
+      role: updated?.user.role,
+      status: updated?.user.status,
+      companyRole: updated?.role,
+      secondaryPhone: updated?.user.secondaryPhone,
+    };
   }
 
   async deleteUser(user: AuthUser, userId: string) {
@@ -306,9 +409,16 @@ export class CompaniesService {
 
     const now = new Date();
     const [jobsCount, usersCount, candidatesCount] = await Promise.all([
-      this.prisma.job.count({ where: { companyId: user.companyId, status: 'active' } }),
+      this.prisma.job.count({
+        where: { companyId: user.companyId, status: 'active' },
+      }),
       this.prisma.companyUser.count({ where: { companyId: user.companyId } }),
-      this.prisma.application.count({ where: { job: { companyId: user.companyId }, status: { not: 'rejected' } } }),
+      this.prisma.application.count({
+        where: {
+          job: { companyId: user.companyId },
+          status: { not: 'rejected' },
+        },
+      }),
     ]);
 
     return {
@@ -316,14 +426,20 @@ export class CompaniesService {
       usage: {
         jobs: { current: jobsCount, max: company.plan?.publicationLimit ?? 5 },
         users: { current: usersCount, max: company.plan?.userLimit ?? 3 },
-        candidates: { current: candidatesCount, max: company.plan?.visibleCandidatesLimit ?? 100 },
+        candidates: {
+          current: candidatesCount,
+          max: company.plan?.visibleCandidatesLimit ?? 100,
+        },
       },
       renewalDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
     };
   }
 
   getPlans() {
-    return this.prisma.plan.findMany({ where: { isActive: true }, orderBy: { price: 'asc' } });
+    return this.prisma.plan.findMany({
+      where: { isActive: true },
+      orderBy: { price: 'asc' },
+    });
   }
 
   async updatePlan(user: AuthUser, planId: string) {
@@ -342,7 +458,13 @@ export class CompaniesService {
 
   // ========== SA-04: Admin Company Management ==========
 
-  async adminListCompanies(filters: { status?: string; planId?: string; search?: string; page?: number; limit?: number }) {
+  async adminListCompanies(filters: {
+    status?: string;
+    planId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
     const { status, planId, search, page = 1, limit = 10 } = filters;
     const where: any = {};
 
@@ -358,7 +480,10 @@ export class CompaniesService {
     const [companies, total] = await Promise.all([
       this.prisma.company.findMany({
         where,
-        include: { plan: true, _count: { select: { jobs: true, users: true } } },
+        include: {
+          plan: true,
+          _count: { select: { jobs: true, users: true } },
+        },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -366,28 +491,45 @@ export class CompaniesService {
       this.prisma.company.count({ where }),
     ]);
 
-    return { companies, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return {
+      companies,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async adminGetSummary() {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const [active, suspended, pending, total, activeLastMonth] = await Promise.all([
-      this.prisma.company.count({ where: { status: 'active' } }),
-      this.prisma.company.count({ where: { status: 'suspended' } }),
-      this.prisma.company.count({ where: { status: 'pending_approval' } }),
-      this.prisma.company.count(),
-      this.prisma.company.count({ where: { status: 'active', createdAt: { lt: thirtyDaysAgo } } }),
-    ]);
+    const [active, suspended, pending, total, activeLastMonth] =
+      await Promise.all([
+        this.prisma.company.count({ where: { status: 'active' } }),
+        this.prisma.company.count({ where: { status: 'suspended' } }),
+        this.prisma.company.count({ where: { status: 'pending_approval' } }),
+        this.prisma.company.count(),
+        this.prisma.company.count({
+          where: { status: 'active', createdAt: { lt: thirtyDaysAgo } },
+        }),
+      ]);
 
-    const activeTrend = activeLastMonth > 0 ? Math.round(((active - activeLastMonth) / activeLastMonth) * 100) : 0;
+    const activeTrend =
+      activeLastMonth > 0
+        ? Math.round(((active - activeLastMonth) / activeLastMonth) * 100)
+        : 0;
 
     return {
       active: { value: active, trend: activeTrend },
       suspended: { value: suspended },
       pending: { value: pending },
-      total: { value: total, trend: Math.round((total / Math.max(1, total - active + activeLastMonth)) * 100 - 100) },
+      total: {
+        value: total,
+        trend: Math.round(
+          (total / Math.max(1, total - active + activeLastMonth)) * 100 - 100,
+        ),
+      },
     };
   }
 
@@ -419,13 +561,32 @@ export class CompaniesService {
   async adminGetCompanyUsers(companyId: string) {
     const companyUsers = await this.prisma.companyUser.findMany({
       where: { companyId },
-      include: { user: { select: { id: true, email: true, role: true, status: true, createdAt: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            phone: true,
+            secondaryPhone: true,
+            role: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'asc' },
     });
-    return companyUsers.map(cu => ({ ...cu.user, companyRole: cu.role, companyUserId: cu.id }));
+    return companyUsers.map((cu) => ({
+      ...cu.user,
+      companyRole: cu.role,
+      companyUserId: cu.id,
+    }));
   }
 
-  async adminGetCompanyJobs(companyId: string, filters: { status?: string; page?: number; limit?: number }) {
+  async adminGetCompanyJobs(
+    companyId: string,
+    filters: { status?: string; page?: number; limit?: number },
+  ) {
     const { status, page = 1, limit = 5 } = filters;
     const where: any = { companyId };
     if (status) where.status = status;
@@ -444,7 +605,10 @@ export class CompaniesService {
     return { jobs, total, page, limit };
   }
 
-  async adminGetCompanyApplications(companyId: string, filters: { status?: string; page?: number; limit?: number }) {
+  async adminGetCompanyApplications(
+    companyId: string,
+    filters: { status?: string; page?: number; limit?: number },
+  ) {
     const { status, page = 1, limit = 10 } = filters;
     const where: any = { job: { companyId } };
     if (status) where.status = status;
@@ -452,7 +616,10 @@ export class CompaniesService {
     const [applications, total] = await Promise.all([
       this.prisma.application.findMany({
         where,
-        include: { candidate: true, job: { select: { id: true, title: true } } },
+        include: {
+          candidate: true,
+          job: { select: { id: true, title: true } },
+        },
         orderBy: { appliedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -468,11 +635,21 @@ export class CompaniesService {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const [activeJobs, totalApplications, scheduledInterviews, hires, recentActivity] = await Promise.all([
+    const [
+      activeJobs,
+      totalApplications,
+      scheduledInterviews,
+      hires,
+      recentActivity,
+    ] = await Promise.all([
       this.prisma.job.count({ where: { companyId, status: 'active' } }),
       this.prisma.application.count({ where: { job: { companyId } } }),
-      this.prisma.interview.count({ where: { companyId, status: { in: ['scheduled', 'confirmed'] } } }),
-      this.prisma.application.count({ where: { job: { companyId }, status: 'hired' } }),
+      this.prisma.interview.count({
+        where: { companyId, status: { in: ['scheduled', 'confirmed'] } },
+      }),
+      this.prisma.application.count({
+        where: { job: { companyId }, status: 'hired' },
+      }),
       this.prisma.activityLog.findMany({
         where: { entityId: companyId, createdAt: { gte: sevenDaysAgo } },
         orderBy: { createdAt: 'desc' },
@@ -480,19 +657,46 @@ export class CompaniesService {
       }),
     ]);
 
-    const [jobsLastMonth, appsLastMonth, interviewsLastMonth, hiresLastMonth] = await Promise.all([
-      this.prisma.job.count({ where: { companyId, status: 'active', createdAt: { lt: thirtyDaysAgo } } }),
-      this.prisma.application.count({ where: { job: { companyId }, appliedAt: { lt: thirtyDaysAgo } } }),
-      this.prisma.interview.count({ where: { companyId, createdAt: { lt: thirtyDaysAgo } } }),
-      this.prisma.application.count({ where: { job: { companyId }, status: 'hired', updatedAt: { lt: thirtyDaysAgo } } }),
-    ]);
+    const [jobsLastMonth, appsLastMonth, interviewsLastMonth, hiresLastMonth] =
+      await Promise.all([
+        this.prisma.job.count({
+          where: {
+            companyId,
+            status: 'active',
+            createdAt: { lt: thirtyDaysAgo },
+          },
+        }),
+        this.prisma.application.count({
+          where: { job: { companyId }, appliedAt: { lt: thirtyDaysAgo } },
+        }),
+        this.prisma.interview.count({
+          where: { companyId, createdAt: { lt: thirtyDaysAgo } },
+        }),
+        this.prisma.application.count({
+          where: {
+            job: { companyId },
+            status: 'hired',
+            updatedAt: { lt: thirtyDaysAgo },
+          },
+        }),
+      ]);
 
-    const calcTrend = (curr: number, prev: number) => prev > 0 ? Math.round(((curr - prev) / prev) * 100) : 0;
+    const calcTrend = (curr: number, prev: number) =>
+      prev > 0 ? Math.round(((curr - prev) / prev) * 100) : 0;
 
     return {
-      activeJobs: { value: activeJobs, trend: calcTrend(activeJobs, jobsLastMonth) },
-      totalApplications: { value: totalApplications, trend: calcTrend(totalApplications, appsLastMonth) },
-      scheduledInterviews: { value: scheduledInterviews, trend: calcTrend(scheduledInterviews, interviewsLastMonth) },
+      activeJobs: {
+        value: activeJobs,
+        trend: calcTrend(activeJobs, jobsLastMonth),
+      },
+      totalApplications: {
+        value: totalApplications,
+        trend: calcTrend(totalApplications, appsLastMonth),
+      },
+      scheduledInterviews: {
+        value: scheduledInterviews,
+        trend: calcTrend(scheduledInterviews, interviewsLastMonth),
+      },
       hires: { value: hires, trend: calcTrend(hires, hiresLastMonth) },
       recentActivity,
     };
@@ -509,12 +713,23 @@ export class CompaniesService {
     });
   }
 
-  async adminCreateCompanyUser(companyId: string, data: { email: string; role: string; password: string }) {
+  async adminCreateCompanyUser(
+    companyId: string,
+    data: {
+      email: string;
+      role?: string;
+      companyRole?: string;
+      password: string;
+      secondaryPhone?: string;
+    },
+  ) {
     const passwordHash = await bcrypt.hash(data.password, 10);
+    const companyRole = this.resolveCompanyRole(data);
 
     const newUser = await this.prisma.user.create({
       data: {
         email: data.email,
+        secondaryPhone: data.secondaryPhone?.trim() || null,
         role: 'company_admin',
         passwordHash,
         status: 'active',
@@ -525,43 +740,82 @@ export class CompaniesService {
       data: {
         companyId,
         userId: newUser.id,
-        role: this.mapCompanyRole(data.role) as any,
+        role: this.mapCompanyRole(companyRole) as any,
       },
     });
 
-    return { id: newUser.id, email: newUser.email, role: newUser.role, status: newUser.status, companyRole: data.role };
+    return {
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+      status: newUser.status,
+      companyRole,
+      secondaryPhone: newUser.secondaryPhone,
+    };
   }
 
-  async adminUpdateCompanyUser(companyId: string, userId: string, data: { role?: string; status?: string }) {
+  async adminUpdateCompanyUser(
+    companyId: string,
+    userId: string,
+    data: {
+      role?: string;
+      companyRole?: string;
+      status?: string;
+      secondaryPhone?: string;
+    },
+  ) {
     const companyUser = await this.prisma.companyUser.findFirst({
       where: { companyId, userId },
     });
-    if (!companyUser) throw new NotFoundException('Usuario no encontrado en esta empresa.');
+    if (!companyUser)
+      throw new NotFoundException('Usuario no encontrado en esta empresa.');
 
-    if (data.role) {
+    const companyRole = this.resolveCompanyRole(data);
+
+    if (data.role || data.companyRole) {
       await this.prisma.companyUser.update({
         where: { id: companyUser.id },
-        data: { role: this.mapCompanyRole(data.role) as any },
+        data: { role: this.mapCompanyRole(companyRole) as any },
       });
     }
 
-    if (data.status) {
+    if (data.status || data.secondaryPhone !== undefined) {
       await this.prisma.user.update({
         where: { id: userId },
-        data: { status: data.status as any },
+        data: {
+          ...(data.status ? { status: data.status as any } : {}),
+          ...(data.secondaryPhone !== undefined
+            ? { secondaryPhone: data.secondaryPhone?.trim() || null }
+            : {}),
+        },
       });
     }
 
     return { success: true };
   }
 
-  async adminUpdateCompany(id: string, data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; planId?: string }) {
+  async adminUpdateCompany(
+    id: string,
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      secondaryPhone?: string;
+      city?: string;
+      address?: string;
+      website?: string;
+      planId?: string;
+    },
+  ) {
     return this.prisma.company.update({
       where: { id },
       data: {
         ...(data.name && { name: data.name }),
         ...(data.email && { email: data.email }),
         ...(data.phone && { phone: data.phone }),
+        ...(data.secondaryPhone !== undefined
+          ? { secondaryPhone: data.secondaryPhone || null }
+          : {}),
         ...(data.city && { city: data.city }),
         ...(data.address && { address: data.address }),
         ...(data.website && { website: data.website }),

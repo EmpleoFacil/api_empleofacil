@@ -15,6 +15,7 @@ class RegisterCandidateDto {
     fullName;
     email;
     phone;
+    secondaryPhone;
     password;
     city;
     country;
@@ -36,6 +37,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], RegisterCandidateDto.prototype, "phone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterCandidateDto.prototype, "secondaryPhone", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),

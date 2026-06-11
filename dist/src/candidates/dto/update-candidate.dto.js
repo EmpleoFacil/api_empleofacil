@@ -17,6 +17,7 @@ class UpdateCandidateDto {
     city;
     country;
     phone;
+    secondaryPhone;
     desiredJobType;
     availability;
     salaryExpectationMin;
@@ -51,6 +52,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateCandidateDto.prototype, "phone", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateCandidateDto.prototype, "secondaryPhone", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

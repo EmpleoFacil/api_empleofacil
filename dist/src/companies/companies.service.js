@@ -84,6 +84,7 @@ let CompaniesService = class CompaniesService {
                 legalName: dto.legalName,
                 email: dto.email,
                 phone: dto.phone,
+                secondaryPhone: dto.secondaryPhone,
                 country: dto.country,
                 city: dto.city,
                 status: (dto.status ?? 'active'),
@@ -102,6 +103,7 @@ let CompaniesService = class CompaniesService {
                 legalName: dto.legalName,
                 email: dto.email,
                 phone: dto.phone,
+                secondaryPhone: dto.secondaryPhone,
                 country: dto.country,
                 city: dto.city,
                 status: dto.status,
@@ -123,11 +125,19 @@ let CompaniesService = class CompaniesService {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const [jobsThisMonth, totalJobs, visibleCandidates, usersCount] = await Promise.all([
             this.prisma.job.count({
-                where: { companyId: user.companyId, createdAt: { gte: startOfMonth } },
+                where: {
+                    companyId: user.companyId,
+                    createdAt: { gte: startOfMonth },
+                },
             }),
-            this.prisma.job.count({ where: { companyId: user.companyId, status: 'active' } }),
+            this.prisma.job.count({
+                where: { companyId: user.companyId, status: 'active' },
+            }),
             this.prisma.application.count({
-                where: { job: { companyId: user.companyId }, status: { not: 'rejected' } },
+                where: {
+                    job: { companyId: user.companyId },
+                    status: { not: 'rejected' },
+                },
             }),
             this.prisma.companyUser.count({ where: { companyId: user.companyId } }),
         ]);
@@ -140,8 +150,16 @@ let CompaniesService = class CompaniesService {
                 id: company.planId,
             },
             limits: {
-                activeJobs: { current: totalJobs, max: pubLimit, remaining: Math.max(0, pubLimit - totalJobs) },
-                visibleCandidates: { current: visibleCandidates, max: candLimit, remaining: Math.max(0, candLimit - visibleCandidates) },
+                activeJobs: {
+                    current: totalJobs,
+                    max: pubLimit,
+                    remaining: Math.max(0, pubLimit - totalJobs),
+                },
+                visibleCandidates: {
+                    current: visibleCandidates,
+                    max: candLimit,
+                    remaining: Math.max(0, candLimit - visibleCandidates),
+                },
             },
             usage: {
                 jobsThisMonth,
@@ -163,6 +181,9 @@ let CompaniesService = class CompaniesService {
             viewer: 'viewer',
         };
         return mapping[role] ?? 'viewer';
+    }
+    resolveCompanyRole(data) {
+        return data.companyRole ?? data.role ?? 'viewer';
     }
     slugify(value) {
         return value
@@ -191,6 +212,9 @@ let CompaniesService = class CompaniesService {
                 ...(data.name && { name: data.name }),
                 ...(data.email && { email: data.email }),
                 ...(data.phone && { phone: data.phone }),
+                ...(data.secondaryPhone !== undefined
+                    ? { secondaryPhone: data.secondaryPhone || null }
+                    : {}),
                 ...(data.city && { city: data.city }),
                 ...(data.address && { address: data.address }),
                 ...(data.website && { website: data.website }),
@@ -224,19 +248,33 @@ let CompaniesService = class CompaniesService {
         }
         const companyUsers = await this.prisma.companyUser.findMany({
             where: { companyId: user.companyId },
-            include: { user: { select: { id: true, email: true, role: true, status: true, createdAt: true } } },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        secondaryPhone: true,
+                        role: true,
+                        status: true,
+                        createdAt: true,
+                    },
+                },
+            },
             orderBy: { createdAt: 'asc' },
         });
-        return companyUsers.map(cu => ({ ...cu.user, companyRole: cu.role }));
+        return companyUsers.map((cu) => ({ ...cu.user, companyRole: cu.role }));
     }
     async createUser(user, data) {
         if (!user.companyId) {
             throw new common_1.ForbiddenException('Usuario sin empresa asignada.');
         }
         const passwordHash = await bcrypt.hash(data.password, 10);
+        const companyRole = this.resolveCompanyRole(data);
         const newUser = await this.prisma.user.create({
             data: {
                 email: data.email,
+                secondaryPhone: data.secondaryPhone?.trim() || null,
                 role: 'company_admin',
                 passwordHash,
                 status: 'active',
@@ -246,10 +284,17 @@ let CompaniesService = class CompaniesService {
             data: {
                 companyId: user.companyId,
                 userId: newUser.id,
-                role: this.mapCompanyRole(data.role),
+                role: this.mapCompanyRole(companyRole),
             },
         });
-        return { id: newUser.id, email: newUser.email, role: newUser.role, status: newUser.status, companyRole: data.role };
+        return {
+            id: newUser.id,
+            email: newUser.email,
+            role: newUser.role,
+            status: newUser.status,
+            companyRole,
+            secondaryPhone: newUser.secondaryPhone,
+        };
     }
     async updateUser(user, userId, data) {
         if (!user.companyId) {
@@ -261,23 +306,36 @@ let CompaniesService = class CompaniesService {
         if (!companyUser) {
             throw new common_1.ForbiddenException('No tienes acceso a este usuario.');
         }
-        if (data.role) {
+        const companyRole = this.resolveCompanyRole(data);
+        if (data.role || data.companyRole) {
             await this.prisma.companyUser.update({
                 where: { id: companyUser.id },
-                data: { role: this.mapCompanyRole(data.role) },
+                data: { role: this.mapCompanyRole(companyRole) },
             });
         }
-        if (data.status) {
+        if (data.status || data.secondaryPhone !== undefined) {
             await this.prisma.user.update({
                 where: { id: userId },
-                data: { status: data.status },
+                data: {
+                    ...(data.status ? { status: data.status } : {}),
+                    ...(data.secondaryPhone !== undefined
+                        ? { secondaryPhone: data.secondaryPhone?.trim() || null }
+                        : {}),
+                },
             });
         }
         const updated = await this.prisma.companyUser.findUnique({
             where: { id: companyUser.id },
             include: { user: true },
         });
-        return { id: updated?.user.id, email: updated?.user.email, role: updated?.user.role, status: updated?.user.status, companyRole: updated?.role };
+        return {
+            id: updated?.user.id,
+            email: updated?.user.email,
+            role: updated?.user.role,
+            status: updated?.user.status,
+            companyRole: updated?.role,
+            secondaryPhone: updated?.user.secondaryPhone,
+        };
     }
     async deleteUser(user, userId) {
         if (!user.companyId) {
@@ -309,22 +367,35 @@ let CompaniesService = class CompaniesService {
             throw new common_1.NotFoundException('Empresa no encontrada.');
         const now = new Date();
         const [jobsCount, usersCount, candidatesCount] = await Promise.all([
-            this.prisma.job.count({ where: { companyId: user.companyId, status: 'active' } }),
+            this.prisma.job.count({
+                where: { companyId: user.companyId, status: 'active' },
+            }),
             this.prisma.companyUser.count({ where: { companyId: user.companyId } }),
-            this.prisma.application.count({ where: { job: { companyId: user.companyId }, status: { not: 'rejected' } } }),
+            this.prisma.application.count({
+                where: {
+                    job: { companyId: user.companyId },
+                    status: { not: 'rejected' },
+                },
+            }),
         ]);
         return {
             plan: company.plan,
             usage: {
                 jobs: { current: jobsCount, max: company.plan?.publicationLimit ?? 5 },
                 users: { current: usersCount, max: company.plan?.userLimit ?? 3 },
-                candidates: { current: candidatesCount, max: company.plan?.visibleCandidatesLimit ?? 100 },
+                candidates: {
+                    current: candidatesCount,
+                    max: company.plan?.visibleCandidatesLimit ?? 100,
+                },
             },
             renewalDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
         };
     }
     getPlans() {
-        return this.prisma.plan.findMany({ where: { isActive: true }, orderBy: { price: 'asc' } });
+        return this.prisma.plan.findMany({
+            where: { isActive: true },
+            orderBy: { price: 'asc' },
+        });
     }
     async updatePlan(user, planId) {
         if (!user.companyId) {
@@ -355,14 +426,23 @@ let CompaniesService = class CompaniesService {
         const [companies, total] = await Promise.all([
             this.prisma.company.findMany({
                 where,
-                include: { plan: true, _count: { select: { jobs: true, users: true } } },
+                include: {
+                    plan: true,
+                    _count: { select: { jobs: true, users: true } },
+                },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit,
             }),
             this.prisma.company.count({ where }),
         ]);
-        return { companies, total, page, limit, totalPages: Math.ceil(total / limit) };
+        return {
+            companies,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     }
     async adminGetSummary() {
         const now = new Date();
@@ -372,14 +452,21 @@ let CompaniesService = class CompaniesService {
             this.prisma.company.count({ where: { status: 'suspended' } }),
             this.prisma.company.count({ where: { status: 'pending_approval' } }),
             this.prisma.company.count(),
-            this.prisma.company.count({ where: { status: 'active', createdAt: { lt: thirtyDaysAgo } } }),
+            this.prisma.company.count({
+                where: { status: 'active', createdAt: { lt: thirtyDaysAgo } },
+            }),
         ]);
-        const activeTrend = activeLastMonth > 0 ? Math.round(((active - activeLastMonth) / activeLastMonth) * 100) : 0;
+        const activeTrend = activeLastMonth > 0
+            ? Math.round(((active - activeLastMonth) / activeLastMonth) * 100)
+            : 0;
         return {
             active: { value: active, trend: activeTrend },
             suspended: { value: suspended },
             pending: { value: pending },
-            total: { value: total, trend: Math.round((total / Math.max(1, total - active + activeLastMonth)) * 100 - 100) },
+            total: {
+                value: total,
+                trend: Math.round((total / Math.max(1, total - active + activeLastMonth)) * 100 - 100),
+            },
         };
     }
     async adminUpdateStatus(id, status) {
@@ -406,10 +493,26 @@ let CompaniesService = class CompaniesService {
     async adminGetCompanyUsers(companyId) {
         const companyUsers = await this.prisma.companyUser.findMany({
             where: { companyId },
-            include: { user: { select: { id: true, email: true, role: true, status: true, createdAt: true } } },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        email: true,
+                        phone: true,
+                        secondaryPhone: true,
+                        role: true,
+                        status: true,
+                        createdAt: true,
+                    },
+                },
+            },
             orderBy: { createdAt: 'asc' },
         });
-        return companyUsers.map(cu => ({ ...cu.user, companyRole: cu.role, companyUserId: cu.id }));
+        return companyUsers.map((cu) => ({
+            ...cu.user,
+            companyRole: cu.role,
+            companyUserId: cu.id,
+        }));
     }
     async adminGetCompanyJobs(companyId, filters) {
         const { status, page = 1, limit = 5 } = filters;
@@ -436,7 +539,10 @@ let CompaniesService = class CompaniesService {
         const [applications, total] = await Promise.all([
             this.prisma.application.findMany({
                 where,
-                include: { candidate: true, job: { select: { id: true, title: true } } },
+                include: {
+                    candidate: true,
+                    job: { select: { id: true, title: true } },
+                },
                 orderBy: { appliedAt: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit,
@@ -449,11 +555,15 @@ let CompaniesService = class CompaniesService {
         const now = new Date();
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const [activeJobs, totalApplications, scheduledInterviews, hires, recentActivity] = await Promise.all([
+        const [activeJobs, totalApplications, scheduledInterviews, hires, recentActivity,] = await Promise.all([
             this.prisma.job.count({ where: { companyId, status: 'active' } }),
             this.prisma.application.count({ where: { job: { companyId } } }),
-            this.prisma.interview.count({ where: { companyId, status: { in: ['scheduled', 'confirmed'] } } }),
-            this.prisma.application.count({ where: { job: { companyId }, status: 'hired' } }),
+            this.prisma.interview.count({
+                where: { companyId, status: { in: ['scheduled', 'confirmed'] } },
+            }),
+            this.prisma.application.count({
+                where: { job: { companyId }, status: 'hired' },
+            }),
             this.prisma.activityLog.findMany({
                 where: { entityId: companyId, createdAt: { gte: sevenDaysAgo } },
                 orderBy: { createdAt: 'desc' },
@@ -461,16 +571,41 @@ let CompaniesService = class CompaniesService {
             }),
         ]);
         const [jobsLastMonth, appsLastMonth, interviewsLastMonth, hiresLastMonth] = await Promise.all([
-            this.prisma.job.count({ where: { companyId, status: 'active', createdAt: { lt: thirtyDaysAgo } } }),
-            this.prisma.application.count({ where: { job: { companyId }, appliedAt: { lt: thirtyDaysAgo } } }),
-            this.prisma.interview.count({ where: { companyId, createdAt: { lt: thirtyDaysAgo } } }),
-            this.prisma.application.count({ where: { job: { companyId }, status: 'hired', updatedAt: { lt: thirtyDaysAgo } } }),
+            this.prisma.job.count({
+                where: {
+                    companyId,
+                    status: 'active',
+                    createdAt: { lt: thirtyDaysAgo },
+                },
+            }),
+            this.prisma.application.count({
+                where: { job: { companyId }, appliedAt: { lt: thirtyDaysAgo } },
+            }),
+            this.prisma.interview.count({
+                where: { companyId, createdAt: { lt: thirtyDaysAgo } },
+            }),
+            this.prisma.application.count({
+                where: {
+                    job: { companyId },
+                    status: 'hired',
+                    updatedAt: { lt: thirtyDaysAgo },
+                },
+            }),
         ]);
         const calcTrend = (curr, prev) => prev > 0 ? Math.round(((curr - prev) / prev) * 100) : 0;
         return {
-            activeJobs: { value: activeJobs, trend: calcTrend(activeJobs, jobsLastMonth) },
-            totalApplications: { value: totalApplications, trend: calcTrend(totalApplications, appsLastMonth) },
-            scheduledInterviews: { value: scheduledInterviews, trend: calcTrend(scheduledInterviews, interviewsLastMonth) },
+            activeJobs: {
+                value: activeJobs,
+                trend: calcTrend(activeJobs, jobsLastMonth),
+            },
+            totalApplications: {
+                value: totalApplications,
+                trend: calcTrend(totalApplications, appsLastMonth),
+            },
+            scheduledInterviews: {
+                value: scheduledInterviews,
+                trend: calcTrend(scheduledInterviews, interviewsLastMonth),
+            },
             hires: { value: hires, trend: calcTrend(hires, hiresLastMonth) },
             recentActivity,
         };
@@ -487,9 +622,11 @@ let CompaniesService = class CompaniesService {
     }
     async adminCreateCompanyUser(companyId, data) {
         const passwordHash = await bcrypt.hash(data.password, 10);
+        const companyRole = this.resolveCompanyRole(data);
         const newUser = await this.prisma.user.create({
             data: {
                 email: data.email,
+                secondaryPhone: data.secondaryPhone?.trim() || null,
                 role: 'company_admin',
                 passwordHash,
                 status: 'active',
@@ -499,10 +636,17 @@ let CompaniesService = class CompaniesService {
             data: {
                 companyId,
                 userId: newUser.id,
-                role: this.mapCompanyRole(data.role),
+                role: this.mapCompanyRole(companyRole),
             },
         });
-        return { id: newUser.id, email: newUser.email, role: newUser.role, status: newUser.status, companyRole: data.role };
+        return {
+            id: newUser.id,
+            email: newUser.email,
+            role: newUser.role,
+            status: newUser.status,
+            companyRole,
+            secondaryPhone: newUser.secondaryPhone,
+        };
     }
     async adminUpdateCompanyUser(companyId, userId, data) {
         const companyUser = await this.prisma.companyUser.findFirst({
@@ -510,16 +654,22 @@ let CompaniesService = class CompaniesService {
         });
         if (!companyUser)
             throw new common_1.NotFoundException('Usuario no encontrado en esta empresa.');
-        if (data.role) {
+        const companyRole = this.resolveCompanyRole(data);
+        if (data.role || data.companyRole) {
             await this.prisma.companyUser.update({
                 where: { id: companyUser.id },
-                data: { role: this.mapCompanyRole(data.role) },
+                data: { role: this.mapCompanyRole(companyRole) },
             });
         }
-        if (data.status) {
+        if (data.status || data.secondaryPhone !== undefined) {
             await this.prisma.user.update({
                 where: { id: userId },
-                data: { status: data.status },
+                data: {
+                    ...(data.status ? { status: data.status } : {}),
+                    ...(data.secondaryPhone !== undefined
+                        ? { secondaryPhone: data.secondaryPhone?.trim() || null }
+                        : {}),
+                },
             });
         }
         return { success: true };
@@ -531,6 +681,9 @@ let CompaniesService = class CompaniesService {
                 ...(data.name && { name: data.name }),
                 ...(data.email && { email: data.email }),
                 ...(data.phone && { phone: data.phone }),
+                ...(data.secondaryPhone !== undefined
+                    ? { secondaryPhone: data.secondaryPhone || null }
+                    : {}),
                 ...(data.city && { city: data.city }),
                 ...(data.address && { address: data.address }),
                 ...(data.website && { website: data.website }),

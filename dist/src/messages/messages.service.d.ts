@@ -32,6 +32,7 @@ export declare class MessagesService {
             updatedAt: Date;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             status: import(".prisma/client").$Enums.CompanyStatus;
             city: string | null;
             country: string | null;
@@ -170,6 +171,7 @@ export declare class MessagesService {
             updatedAt: Date;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             status: import(".prisma/client").$Enums.CompanyStatus;
             city: string | null;
             country: string | null;

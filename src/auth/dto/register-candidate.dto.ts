@@ -13,6 +13,10 @@ export class RegisterCandidateDto {
   @IsString()
   phone?: string;
 
+  @IsOptional()
+  @IsString()
+  secondaryPhone?: string;
+
   @IsString()
   @IsNotEmpty()
   password: string;

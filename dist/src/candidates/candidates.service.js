@@ -29,6 +29,7 @@ let CandidatesService = class CandidatesService {
                         id: true,
                         email: true,
                         phone: true,
+                        secondaryPhone: true,
                     },
                 },
             },
@@ -54,6 +55,9 @@ let CandidatesService = class CandidatesService {
         const userData = {
             ...(dto.email != null ? { email: dto.email } : {}),
             ...(dto.phone != null ? { phone: dto.phone } : {}),
+            ...(dto.secondaryPhone !== undefined
+                ? { secondaryPhone: dto.secondaryPhone }
+                : {}),
         };
         return this.prisma.$transaction(async (tx) => {
             if (Object.keys(userData).length > 0) {
@@ -71,6 +75,7 @@ let CandidatesService = class CandidatesService {
                             id: true,
                             email: true,
                             phone: true,
+                            secondaryPhone: true,
                         },
                     },
                 },
@@ -130,7 +135,8 @@ let CandidatesService = class CandidatesService {
                 where,
                 include: {
                     user: { select: { email: true } },
-                    _count: { select: { applications: true, documents: true } },
+                    documents: { select: { type: true } },
+                    _count: { select: { applications: true } },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: (page - 1) * limit,
@@ -139,7 +145,10 @@ let CandidatesService = class CandidatesService {
             this.prisma.candidateProfile.count({ where }),
         ]);
         return {
-            candidates,
+            candidates: candidates.map(({ documents, ...candidate }) => ({
+                ...candidate,
+                documentsCount: Math.min(4, new Set(documents.map((document) => document.type)).size),
+            })),
             pagination: { page, limit, total, pages: Math.ceil(total / limit) },
         };
     }

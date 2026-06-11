@@ -23,6 +23,10 @@ export class UpdateCandidateDto {
 
   @IsOptional()
   @IsString()
+  secondaryPhone?: string;
+
+  @IsOptional()
+  @IsString()
   desiredJobType?: string;
 
   @IsOptional()

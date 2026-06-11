@@ -107,6 +107,7 @@ model User {
   id           String     @id @default(uuid())
   email        String?    @unique
   phone        String?    @unique
+  secondaryPhone String?
   passwordHash String?
   role         UserRole
   status       UserStatus @default(active)
@@ -123,6 +124,7 @@ model User {
 
   @@index([email])
   @@index([phone])
+  @@index([secondaryPhone])
   @@index([role])
   @@index([status])
 }
@@ -183,6 +185,7 @@ model Company {
   legalName String?
   email     String?
   phone     String?
+  secondaryPhone String?
   city      String?
   country   String?       @default("Nicaragua")
   address   String?

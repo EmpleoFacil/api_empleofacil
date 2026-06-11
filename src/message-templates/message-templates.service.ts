@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMessageTemplateDto } from './dto/create-message-template.dto';
 import { UpdateMessageTemplateDto } from './dto/update-message-template.dto';
 import type { AuthUser } from '../common/types/auth-user';
+import { assertNoOffensiveContent } from '../common/utils/text-moderation';
 
 @Injectable()
 export class MessageTemplatesService {
@@ -26,6 +27,12 @@ export class MessageTemplatesService {
   }
 
   async create(user: AuthUser, dto: CreateMessageTemplateDto) {
+    assertNoOffensiveContent([
+      { label: 'nombre de plantilla', value: dto.name },
+      { label: 'asunto de plantilla', value: dto.subject },
+      { label: 'contenido de plantilla', value: dto.body },
+    ]);
+
     const companyId =
       user.role === 'super_admin' ? dto.companyId ?? null : user.companyId;
 
@@ -47,6 +54,12 @@ export class MessageTemplatesService {
   }
 
   async update(user: AuthUser, id: string, dto: UpdateMessageTemplateDto) {
+    assertNoOffensiveContent([
+      { label: 'nombre de plantilla', value: dto.name },
+      { label: 'asunto de plantilla', value: dto.subject },
+      { label: 'contenido de plantilla', value: dto.body },
+    ]);
+
     const template = await this.prisma.messageTemplate.findUnique({
       where: { id },
     });

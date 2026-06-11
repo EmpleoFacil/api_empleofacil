@@ -23,6 +23,10 @@ export class CreateCompanyDto {
 
   @IsOptional()
   @IsString()
+  secondaryPhone?: string;
+
+  @IsOptional()
+  @IsString()
   country?: string;
 
   @IsOptional()

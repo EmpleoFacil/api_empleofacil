@@ -9,6 +9,7 @@ export declare class CandidatesService {
             id: string;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
         };
     } & {
         id: string;
@@ -33,6 +34,7 @@ export declare class CandidatesService {
             id: string;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
         };
     } & {
         id: string;
@@ -59,6 +61,7 @@ export declare class CandidatesService {
             updatedAt: Date;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             passwordHash: string | null;
             role: import(".prisma/client").$Enums.UserRole;
             status: import(".prisma/client").$Enums.UserStatus;
@@ -88,6 +91,7 @@ export declare class CandidatesService {
             updatedAt: Date;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             passwordHash: string | null;
             role: import(".prisma/client").$Enums.UserRole;
             status: import(".prisma/client").$Enums.UserStatus;
@@ -145,15 +149,14 @@ export declare class CandidatesService {
         page?: number;
         limit?: number;
     }): Promise<{
-        candidates: ({
+        candidates: {
+            documentsCount: number;
             user: {
                 email: string | null;
             };
             _count: {
                 applications: number;
-                documents: number;
             };
-        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -170,7 +173,7 @@ export declare class CandidatesService {
             educationLevel: string | null;
             profileCompletion: number;
             userId: string;
-        })[];
+        }[];
         pagination: {
             page: number;
             limit: number;

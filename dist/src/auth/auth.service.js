@@ -64,7 +64,11 @@ let AuthService = class AuthService {
         }
         const existing = await this.prisma.user.findFirst({
             where: {
-                OR: [{ email: dto.email ?? '' }, { phone: dto.phone ?? '' }].filter((c) => Object.values(c).some(Boolean)),
+                OR: [
+                    { email: dto.email ?? '' },
+                    { phone: dto.phone ?? '' },
+                    { secondaryPhone: dto.secondaryPhone ?? '' },
+                ].filter((c) => Object.values(c).some(Boolean)),
             },
         });
         if (existing) {
@@ -75,6 +79,7 @@ let AuthService = class AuthService {
             data: {
                 email: dto.email,
                 phone: dto.phone,
+                secondaryPhone: dto.secondaryPhone,
                 passwordHash,
                 role: 'candidate',
                 candidateProfile: {
@@ -207,6 +212,7 @@ let AuthService = class AuthService {
                 id: user.id,
                 email: user.email,
                 phone: user.phone,
+                secondaryPhone: user.secondaryPhone ?? null,
                 role: user.role,
                 candidateId,
                 companyId,

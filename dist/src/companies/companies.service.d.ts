@@ -14,6 +14,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -31,6 +32,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -48,6 +50,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -65,6 +68,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -117,6 +121,7 @@ export declare class CompaniesService {
         };
     }>;
     private mapCompanyRole;
+    private resolveCompanyRole;
     private slugify;
     getMe(user: AuthUser): Promise<({
         plan: {
@@ -138,6 +143,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -152,6 +158,7 @@ export declare class CompaniesService {
         name?: string;
         email?: string;
         phone?: string;
+        secondaryPhone?: string;
         city?: string;
         address?: string;
         website?: string;
@@ -163,6 +170,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -181,29 +189,37 @@ export declare class CompaniesService {
         id: string;
         createdAt: Date;
         email: string | null;
+        phone: string | null;
+        secondaryPhone: string | null;
         role: import(".prisma/client").$Enums.UserRole;
         status: import(".prisma/client").$Enums.UserStatus;
     }[]>;
     createUser(user: AuthUser, data: {
         email: string;
-        role: string;
+        role?: string;
+        companyRole?: string;
         password: string;
+        secondaryPhone?: string;
     }): Promise<{
         id: string;
         email: string | null;
         role: import(".prisma/client").$Enums.UserRole;
         status: import(".prisma/client").$Enums.UserStatus;
         companyRole: string;
+        secondaryPhone: string | null;
     }>;
     updateUser(user: AuthUser, userId: string, data: {
         role?: string;
+        companyRole?: string;
         status?: string;
+        secondaryPhone?: string;
     }): Promise<{
         id: string | undefined;
         email: string | null | undefined;
         role: import(".prisma/client").$Enums.UserRole | undefined;
         status: import(".prisma/client").$Enums.UserStatus | undefined;
         companyRole: import(".prisma/client").$Enums.CompanyRole | undefined;
+        secondaryPhone: string | null | undefined;
     }>;
     deleteUser(user: AuthUser, userId: string): Promise<{
         id: string;
@@ -211,6 +227,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         passwordHash: string | null;
         role: import(".prisma/client").$Enums.UserRole;
         status: import(".prisma/client").$Enums.UserStatus;
@@ -276,6 +293,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -317,6 +335,7 @@ export declare class CompaniesService {
             updatedAt: Date;
             email: string | null;
             phone: string | null;
+            secondaryPhone: string | null;
             status: import(".prisma/client").$Enums.CompanyStatus;
             city: string | null;
             country: string | null;
@@ -355,6 +374,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -372,6 +392,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -402,6 +423,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -418,6 +440,8 @@ export declare class CompaniesService {
         id: string;
         createdAt: Date;
         email: string | null;
+        phone: string | null;
+        secondaryPhone: string | null;
         role: import(".prisma/client").$Enums.UserRole;
         status: import(".prisma/client").$Enums.UserStatus;
     }[]>;
@@ -540,6 +564,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;
@@ -552,18 +577,23 @@ export declare class CompaniesService {
     }>;
     adminCreateCompanyUser(companyId: string, data: {
         email: string;
-        role: string;
+        role?: string;
+        companyRole?: string;
         password: string;
+        secondaryPhone?: string;
     }): Promise<{
         id: string;
         email: string | null;
         role: import(".prisma/client").$Enums.UserRole;
         status: import(".prisma/client").$Enums.UserStatus;
         companyRole: string;
+        secondaryPhone: string | null;
     }>;
     adminUpdateCompanyUser(companyId: string, userId: string, data: {
         role?: string;
+        companyRole?: string;
         status?: string;
+        secondaryPhone?: string;
     }): Promise<{
         success: boolean;
     }>;
@@ -571,6 +601,7 @@ export declare class CompaniesService {
         name?: string;
         email?: string;
         phone?: string;
+        secondaryPhone?: string;
         city?: string;
         address?: string;
         website?: string;
@@ -595,6 +626,7 @@ export declare class CompaniesService {
         updatedAt: Date;
         email: string | null;
         phone: string | null;
+        secondaryPhone: string | null;
         status: import(".prisma/client").$Enums.CompanyStatus;
         city: string | null;
         country: string | null;

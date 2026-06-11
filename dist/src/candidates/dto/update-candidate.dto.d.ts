@@ -4,6 +4,7 @@ export declare class UpdateCandidateDto {
     city?: string;
     country?: string;
     phone?: string;
+    secondaryPhone?: string;
     desiredJobType?: string;
     availability?: string;
     salaryExpectationMin?: number;

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessageTemplatesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const text_moderation_1 = require("../common/utils/text-moderation");
 let MessageTemplatesService = class MessageTemplatesService {
     prisma;
     constructor(prisma) {
@@ -31,6 +32,11 @@ let MessageTemplatesService = class MessageTemplatesService {
         return { items: templates };
     }
     async create(user, dto) {
+        (0, text_moderation_1.assertNoOffensiveContent)([
+            { label: 'nombre de plantilla', value: dto.name },
+            { label: 'asunto de plantilla', value: dto.subject },
+            { label: 'contenido de plantilla', value: dto.body },
+        ]);
         const companyId = user.role === 'super_admin' ? dto.companyId ?? null : user.companyId;
         const template = await this.prisma.messageTemplate.create({
             data: {
@@ -48,6 +54,11 @@ let MessageTemplatesService = class MessageTemplatesService {
         };
     }
     async update(user, id, dto) {
+        (0, text_moderation_1.assertNoOffensiveContent)([
+            { label: 'nombre de plantilla', value: dto.name },
+            { label: 'asunto de plantilla', value: dto.subject },
+            { label: 'contenido de plantilla', value: dto.body },
+        ]);
         const template = await this.prisma.messageTemplate.findUnique({
             where: { id },
         });

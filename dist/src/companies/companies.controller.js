@@ -66,7 +66,13 @@ let CompaniesController = class CompaniesController {
         return this.companiesService.updatePlan(user, planId);
     }
     adminListCompanies(status, planId, search, page, limit) {
-        return this.companiesService.adminListCompanies({ status, planId, search, page: page ? +page : 1, limit: limit ? +limit : 10 });
+        return this.companiesService.adminListCompanies({
+            status,
+            planId,
+            search,
+            page: page ? +page : 1,
+            limit: limit ? +limit : 10,
+        });
     }
     adminGetSummary() {
         return this.companiesService.adminGetSummary();
@@ -93,10 +99,18 @@ let CompaniesController = class CompaniesController {
         return this.companiesService.adminGetCompanyUsers(id);
     }
     adminGetCompanyJobs(id, status, page, limit) {
-        return this.companiesService.adminGetCompanyJobs(id, { status, page: page ? +page : 1, limit: limit ? +limit : 5 });
+        return this.companiesService.adminGetCompanyJobs(id, {
+            status,
+            page: page ? +page : 1,
+            limit: limit ? +limit : 5,
+        });
     }
     adminGetCompanyApplications(id, status, page, limit) {
-        return this.companiesService.adminGetCompanyApplications(id, { status, page: page ? +page : 1, limit: limit ? +limit : 10 });
+        return this.companiesService.adminGetCompanyApplications(id, {
+            status,
+            page: page ? +page : 1,
+            limit: limit ? +limit : 10,
+        });
     }
     adminGetCompanyMetrics(id) {
         return this.companiesService.adminGetCompanyMetrics(id);

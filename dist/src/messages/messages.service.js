@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MessagesService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const text_moderation_1 = require("../common/utils/text-moderation");
 const messages_gateway_1 = require("./messages.gateway");
 let MessagesService = class MessagesService {
     prisma;
@@ -21,6 +22,10 @@ let MessagesService = class MessagesService {
         this.messagesGateway = messagesGateway;
     }
     async create(user, dto) {
+        (0, text_moderation_1.assertNoOffensiveContent)([
+            { label: 'asunto', value: dto.title },
+            { label: 'mensaje', value: dto.body },
+        ]);
         const companyId = user.role === 'super_admin' ? dto.companyId : user.companyId;
         if (!companyId) {
             throw new common_1.ForbiddenException('CompanyId requerido.');
@@ -128,6 +133,7 @@ let MessagesService = class MessagesService {
         return message;
     }
     async respond(id, dto, user) {
+        (0, text_moderation_1.assertNoOffensiveContent)([{ label: 'respuesta', value: dto.body }]);
         if (!user.candidateId) {
             throw new common_1.ForbiddenException('Usuario no es candidato.');
         }
@@ -225,6 +231,11 @@ let MessagesService = class MessagesService {
         });
     }
     createTemplate(user, data) {
+        (0, text_moderation_1.assertNoOffensiveContent)([
+            { label: 'nombre de plantilla', value: data.name },
+            { label: 'asunto de plantilla', value: data.subject },
+            { label: 'contenido de plantilla', value: data.body },
+        ]);
         return this.prisma.messageTemplate.create({
             data: {
                 name: data.name,
@@ -236,6 +247,11 @@ let MessagesService = class MessagesService {
         });
     }
     async updateTemplate(id, user, data) {
+        (0, text_moderation_1.assertNoOffensiveContent)([
+            { label: 'nombre de plantilla', value: data.name },
+            { label: 'asunto de plantilla', value: data.subject },
+            { label: 'contenido de plantilla', value: data.body },
+        ]);
         const template = await this.prisma.messageTemplate.findUnique({
             where: { id },
         });

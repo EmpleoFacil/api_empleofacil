@@ -4,6 +4,7 @@ export declare class CreateCompanyDto {
     legalName?: string;
     email?: string;
     phone?: string;
+    secondaryPhone?: string;
     country?: string;
     city?: string;
     plan?: string;

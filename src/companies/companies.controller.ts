@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { UseInterceptors, UploadedFile } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -40,14 +50,30 @@ export class CompaniesController {
 
   @Patch('me')
   @Roles('company_admin')
-  updateMe(@CurrentUser() user: AuthUser, @Body() data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; logoUrl?: string }) {
+  updateMe(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      secondaryPhone?: string;
+      city?: string;
+      address?: string;
+      website?: string;
+      logoUrl?: string;
+    },
+  ) {
     return this.companiesService.updateMe(user, data);
   }
 
   @Post('me/logo')
   @Roles('company_admin')
   @UseInterceptors(FileInterceptor('file'))
-  uploadMeLogo(@CurrentUser() user: AuthUser, @UploadedFile() file: Express.Multer.File) {
+  uploadMeLogo(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     return this.companiesService.uploadMyLogo(user, file);
   }
 
@@ -59,13 +85,33 @@ export class CompaniesController {
 
   @Post('me/users')
   @Roles('company_admin')
-  createUser(@CurrentUser() user: AuthUser, @Body() data: { email: string; name: string; role: string; password: string }) {
+  createUser(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    data: {
+      email: string;
+      role?: string;
+      companyRole?: string;
+      password: string;
+      secondaryPhone?: string;
+    },
+  ) {
     return this.companiesService.createUser(user, data);
   }
 
   @Patch('me/users/:userId')
   @Roles('company_admin')
-  updateUser(@CurrentUser() user: AuthUser, @Param('userId') userId: string, @Body() data: { name?: string; role?: string; status?: string }) {
+  updateUser(
+    @CurrentUser() user: AuthUser,
+    @Param('userId') userId: string,
+    @Body()
+    data: {
+      role?: string;
+      companyRole?: string;
+      status?: string;
+      secondaryPhone?: string;
+    },
+  ) {
     return this.companiesService.updateUser(user, userId, data);
   }
 
@@ -104,7 +150,13 @@ export class CompaniesController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.companiesService.adminListCompanies({ status, planId, search, page: page ? +page : 1, limit: limit ? +limit : 10 });
+    return this.companiesService.adminListCompanies({
+      status,
+      planId,
+      search,
+      page: page ? +page : 1,
+      limit: limit ? +limit : 10,
+    });
   }
 
   @Get('admin/summary')
@@ -163,14 +215,32 @@ export class CompaniesController {
 
   @Get('admin/:id/jobs')
   @Roles('super_admin')
-  adminGetCompanyJobs(@Param('id') id: string, @Query('status') status?: string, @Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.companiesService.adminGetCompanyJobs(id, { status, page: page ? +page : 1, limit: limit ? +limit : 5 });
+  adminGetCompanyJobs(
+    @Param('id') id: string,
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.companiesService.adminGetCompanyJobs(id, {
+      status,
+      page: page ? +page : 1,
+      limit: limit ? +limit : 5,
+    });
   }
 
   @Get('admin/:id/applications')
   @Roles('super_admin')
-  adminGetCompanyApplications(@Param('id') id: string, @Query('status') status?: string, @Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.companiesService.adminGetCompanyApplications(id, { status, page: page ? +page : 1, limit: limit ? +limit : 10 });
+  adminGetCompanyApplications(
+    @Param('id') id: string,
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.companiesService.adminGetCompanyApplications(id, {
+      status,
+      page: page ? +page : 1,
+      limit: limit ? +limit : 10,
+    });
   }
 
   @Get('admin/:id/metrics')
@@ -181,25 +251,65 @@ export class CompaniesController {
 
   @Patch('admin/:id/plan')
   @Roles('super_admin')
-  adminUpdateCompanyPlan(@Param('id') id: string, @Body('planId') planId: string) {
+  adminUpdateCompanyPlan(
+    @Param('id') id: string,
+    @Body('planId') planId: string,
+  ) {
     return this.companiesService.adminUpdateCompanyPlan(id, planId);
   }
 
   @Post('admin/:id/users')
   @Roles('super_admin')
-  adminCreateCompanyUser(@Param('id') id: string, @Body() data: { email: string; role: string; password: string }) {
+  adminCreateCompanyUser(
+    @Param('id') id: string,
+    @Body()
+    data: {
+      email: string;
+      role?: string;
+      companyRole?: string;
+      password: string;
+      secondaryPhone?: string;
+    },
+  ) {
     return this.companiesService.adminCreateCompanyUser(id, data);
   }
 
   @Patch('admin/:companyId/users/:userId')
   @Roles('super_admin')
-  adminUpdateCompanyUser(@Param('companyId') companyId: string, @Param('userId') userId: string, @Body() data: { role?: string; status?: string }) {
-    return this.companiesService.adminUpdateCompanyUser(companyId, userId, data);
+  adminUpdateCompanyUser(
+    @Param('companyId') companyId: string,
+    @Param('userId') userId: string,
+    @Body()
+    data: {
+      role?: string;
+      companyRole?: string;
+      status?: string;
+      secondaryPhone?: string;
+    },
+  ) {
+    return this.companiesService.adminUpdateCompanyUser(
+      companyId,
+      userId,
+      data,
+    );
   }
 
   @Patch('admin/:id')
   @Roles('super_admin')
-  adminUpdateCompany(@Param('id') id: string, @Body() data: { name?: string; email?: string; phone?: string; city?: string; address?: string; website?: string; planId?: string }) {
+  adminUpdateCompany(
+    @Param('id') id: string,
+    @Body()
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      secondaryPhone?: string;
+      city?: string;
+      address?: string;
+      website?: string;
+      planId?: string;
+    },
+  ) {
     return this.companiesService.adminUpdateCompany(id, data);
   }
 }
