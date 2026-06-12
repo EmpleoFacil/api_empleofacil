@@ -276,6 +276,7 @@ export declare class MessagesService {
                 city: string | null;
                 country: string | null;
                 companyId: string;
+                customCategory: string | null;
                 title: string;
                 description: string | null;
                 requirements: string[];
@@ -284,6 +285,7 @@ export declare class MessagesService {
                 salaryMax: number | null;
                 employmentType: string | null;
                 modality: string | null;
+                expiresAt: Date | null;
                 categoryId: string | null;
             };
         } & {

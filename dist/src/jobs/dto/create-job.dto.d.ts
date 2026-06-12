@@ -1,6 +1,7 @@
 export declare class CreateJobDto {
     title: string;
     categoryId?: string;
+    customCategory?: string;
     description?: string;
     requirements?: string[];
     benefits?: string[];
@@ -11,5 +12,6 @@ export declare class CreateJobDto {
     employmentType?: string;
     modality?: string;
     status?: string;
+    expiresAt?: string;
     companyId?: string;
 }

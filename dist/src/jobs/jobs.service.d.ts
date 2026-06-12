@@ -31,6 +31,7 @@ export declare class JobsService {
         city: string | null;
         country: string | null;
         companyId: string;
+        customCategory: string | null;
         title: string;
         description: string | null;
         requirements: string[];
@@ -39,6 +40,7 @@ export declare class JobsService {
         salaryMax: number | null;
         employmentType: string | null;
         modality: string | null;
+        expiresAt: Date | null;
         categoryId: string | null;
     })[]>;
     search(query?: string, city?: string, categoryId?: string, page?: number, limit?: number): Promise<{
@@ -63,6 +65,7 @@ export declare class JobsService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -71,13 +74,14 @@ export declare class JobsService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         })[];
         total: number;
         page: number;
         totalPages: number;
     }>;
-    list(user: AuthUser): never[] | import(".prisma/client").Prisma.PrismaPromise<{
+    list(user: AuthUser): Promise<{
         id: string;
         currency: string;
         createdAt: Date;
@@ -86,6 +90,7 @@ export declare class JobsService {
         city: string | null;
         country: string | null;
         companyId: string;
+        customCategory: string | null;
         title: string;
         description: string | null;
         requirements: string[];
@@ -94,8 +99,10 @@ export declare class JobsService {
         salaryMax: number | null;
         employmentType: string | null;
         modality: string | null;
+        expiresAt: Date | null;
         categoryId: string | null;
     }[]>;
+    private listWithExpirationSync;
     getCompanyJobs(user: AuthUser, query?: string, city?: string, status?: string, page?: number, limit?: number): Promise<{
         items: {
             applications: number;
@@ -110,6 +117,7 @@ export declare class JobsService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -118,6 +126,7 @@ export declare class JobsService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         }[];
         total: number;
@@ -160,6 +169,7 @@ export declare class JobsService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -168,6 +178,7 @@ export declare class JobsService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         }[];
         total: number;
@@ -183,6 +194,7 @@ export declare class JobsService {
         city: string | null;
         country: string | null;
         companyId: string;
+        customCategory: string | null;
         title: string;
         description: string | null;
         requirements: string[];
@@ -191,6 +203,7 @@ export declare class JobsService {
         salaryMax: number | null;
         employmentType: string | null;
         modality: string | null;
+        expiresAt: Date | null;
         categoryId: string | null;
     }>;
     getById(id: string, user: AuthUser): Promise<{
@@ -212,6 +225,12 @@ export declare class JobsService {
             logoUrl: string | null;
             planId: string | null;
         };
+        category: {
+            id: string;
+            name: string;
+            isActive: boolean;
+            icon: string | null;
+        } | null;
     } & {
         id: string;
         currency: string;
@@ -221,6 +240,7 @@ export declare class JobsService {
         city: string | null;
         country: string | null;
         companyId: string;
+        customCategory: string | null;
         title: string;
         description: string | null;
         requirements: string[];
@@ -229,6 +249,7 @@ export declare class JobsService {
         salaryMax: number | null;
         employmentType: string | null;
         modality: string | null;
+        expiresAt: Date | null;
         categoryId: string | null;
     }>;
     create(user: AuthUser, dto: CreateJobDto): Promise<{
@@ -240,6 +261,7 @@ export declare class JobsService {
         city: string | null;
         country: string | null;
         companyId: string;
+        customCategory: string | null;
         title: string;
         description: string | null;
         requirements: string[];
@@ -248,6 +270,7 @@ export declare class JobsService {
         salaryMax: number | null;
         employmentType: string | null;
         modality: string | null;
+        expiresAt: Date | null;
         categoryId: string | null;
     }>;
     update(id: string, user: AuthUser, dto: UpdateJobDto): Promise<{
@@ -259,6 +282,7 @@ export declare class JobsService {
         city: string | null;
         country: string | null;
         companyId: string;
+        customCategory: string | null;
         title: string;
         description: string | null;
         requirements: string[];
@@ -267,10 +291,13 @@ export declare class JobsService {
         salaryMax: number | null;
         employmentType: string | null;
         modality: string | null;
+        expiresAt: Date | null;
         categoryId: string | null;
     }>;
     remove(id: string, user: AuthUser): Promise<{
         status: string;
     }>;
     private resolveCompanyId;
+    private buildPublicActiveWhere;
+    private closeExpiredJobs;
 }

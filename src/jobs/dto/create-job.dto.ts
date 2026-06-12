@@ -1,4 +1,4 @@
-import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateJobDto {
   @IsString()
@@ -8,6 +8,10 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  customCategory?: string;
 
   @IsOptional()
   @IsString()
@@ -52,6 +56,10 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   status?: string;
+
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
 
   @IsOptional()
   @IsString()

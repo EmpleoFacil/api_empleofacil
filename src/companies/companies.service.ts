@@ -91,6 +91,15 @@ export class CompaniesService {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
 
+    await this.prisma.job.updateMany({
+      where: {
+        companyId: user.companyId,
+        status: 'active',
+        expiresAt: { lt: new Date() },
+      },
+      data: { status: 'closed' },
+    });
+
     const company = await this.prisma.company.findUnique({
       where: { id: user.companyId },
       include: { plan: true },

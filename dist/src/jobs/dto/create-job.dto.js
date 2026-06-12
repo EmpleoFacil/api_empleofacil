@@ -14,6 +14,7 @@ const class_validator_1 = require("class-validator");
 class CreateJobDto {
     title;
     categoryId;
+    customCategory;
     description;
     requirements;
     benefits;
@@ -24,6 +25,7 @@ class CreateJobDto {
     employmentType;
     modality;
     status;
+    expiresAt;
     companyId;
 }
 exports.CreateJobDto = CreateJobDto;
@@ -37,6 +39,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateJobDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateJobDto.prototype, "customCategory", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -91,6 +98,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateJobDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateJobDto.prototype, "expiresAt", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

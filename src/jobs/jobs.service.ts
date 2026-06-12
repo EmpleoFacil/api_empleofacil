@@ -10,15 +10,19 @@ export class JobsService {
 
   getCategories() {
     return this.prisma.jobCategory.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
         icon: true,
       },
+      orderBy: { name: 'asc' },
     });
   }
 
   async getRecommended(user: AuthUser, categoryId?: string) {
+    await this.closeExpiredJobs();
+
     if (!user.candidateId) {
       return this.prisma.job.findMany({
         where: {
@@ -69,16 +73,22 @@ export class JobsService {
   }
 
   async search(query?: string, city?: string, categoryId?: string, page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
+    await this.closeExpiredJobs();
 
-    const where: any = { status: 'active' };
+    const skip = (page - 1) * limit;
+    const where: any = {
+      ...this.buildPublicActiveWhere(),
+      AND: [],
+    };
 
     if (query) {
-      where.OR = [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { company: { name: { contains: query, mode: 'insensitive' } } },
-      ];
+      where.AND.push({
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { company: { name: { contains: query, mode: 'insensitive' } } },
+        ],
+      });
     }
 
     if (city) {
@@ -87,6 +97,10 @@ export class JobsService {
 
     if (categoryId) {
       where.categoryId = categoryId;
+    }
+
+    if (!where.AND.length) {
+      delete where.AND;
     }
 
     const [items, total] = await Promise.all([
@@ -112,6 +126,12 @@ export class JobsService {
   }
 
   list(user: AuthUser) {
+    return this.listWithExpirationSync(user);
+  }
+
+  private async listWithExpirationSync(user: AuthUser) {
+    await this.closeExpiredJobs();
+
     if (user.role === 'super_admin') {
       return this.prisma.job.findMany({ include: { company: true } });
     }
@@ -123,10 +143,12 @@ export class JobsService {
       return this.prisma.job.findMany({ where: { companyId: user.companyId } });
     }
 
-    return this.prisma.job.findMany({ where: { status: 'active' } });
+    return this.prisma.job.findMany({ where: this.buildPublicActiveWhere() });
   }
 
   async getCompanyJobs(user: AuthUser, query?: string, city?: string, status?: string, page = 1, limit = 10) {
+    await this.closeExpiredJobs();
+
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
@@ -166,6 +188,8 @@ export class JobsService {
   }
 
   async getCompanySummary(user: AuthUser) {
+    await this.closeExpiredJobs();
+
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada.');
     }
@@ -198,6 +222,8 @@ export class JobsService {
   }
 
   async getAdminJobs(query?: string, companyId?: string, status?: string, page = 1, limit = 10) {
+    await this.closeExpiredJobs();
+
     const skip = (page - 1) * limit;
     const where: any = {};
 
@@ -237,6 +263,8 @@ export class JobsService {
   }
 
   async updateStatus(id: string, user: AuthUser, status: string) {
+    await this.closeExpiredJobs();
+
     const job = await this.prisma.job.findUnique({ where: { id } });
 
     if (!job) {
@@ -254,9 +282,11 @@ export class JobsService {
   }
 
   async getById(id: string, user: AuthUser) {
+    await this.closeExpiredJobs();
+
     const job = await this.prisma.job.findUnique({
       where: { id },
-      include: { company: true },
+      include: { company: true, category: true },
     });
 
     if (!job) {
@@ -276,10 +306,14 @@ export class JobsService {
 
   async create(user: AuthUser, dto: CreateJobDto) {
     const companyId = this.resolveCompanyId(user, dto.companyId);
+    const categoryId = dto.categoryId && dto.categoryId !== 'other' ? dto.categoryId : null;
+    const customCategory = dto.customCategory?.trim() || null;
 
     return this.prisma.job.create({
       data: {
         companyId,
+        categoryId,
+        customCategory,
         title: dto.title,
         description: dto.description,
         requirements: dto.requirements ?? [],
@@ -291,11 +325,14 @@ export class JobsService {
         employmentType: dto.employmentType,
         modality: dto.modality,
         status: (dto.status ?? 'active') as any,
+        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       },
     });
   }
 
   async update(id: string, user: AuthUser, dto: UpdateJobDto) {
+    await this.closeExpiredJobs();
+
     const job = await this.prisma.job.findUnique({ where: { id } });
 
     if (!job) {
@@ -306,9 +343,15 @@ export class JobsService {
       throw new ForbiddenException('No tienes acceso a esta vacante.');
     }
 
+    const categoryId =
+      dto.categoryId === undefined ? undefined : dto.categoryId && dto.categoryId !== 'other' ? dto.categoryId : null;
+    const customCategory = dto.customCategory === undefined ? undefined : dto.customCategory.trim() || null;
+
     return this.prisma.job.update({
       where: { id },
       data: {
+        categoryId,
+        customCategory,
         title: dto.title,
         description: dto.description,
         requirements: dto.requirements,
@@ -320,6 +363,7 @@ export class JobsService {
         employmentType: dto.employmentType,
         modality: dto.modality,
         status: dto.status as any,
+        expiresAt: dto.expiresAt === undefined ? undefined : dto.expiresAt ? new Date(dto.expiresAt) : null,
       },
     });
   }
@@ -352,5 +396,24 @@ export class JobsService {
     }
 
     return user.companyId;
+  }
+
+  private buildPublicActiveWhere() {
+    return {
+      status: 'active' as const,
+      OR: [{ expiresAt: null }, { expiresAt: { gte: new Date() } }],
+    };
+  }
+
+  private async closeExpiredJobs() {
+    await this.prisma.job.updateMany({
+      where: {
+        status: 'active',
+        expiresAt: { lt: new Date() },
+      },
+      data: {
+        status: 'closed',
+      },
+    });
   }
 }

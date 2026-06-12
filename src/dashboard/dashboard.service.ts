@@ -12,6 +12,14 @@ export class DashboardService {
     }
 
     const companyId = user.companyId!;
+    await this.prisma.job.updateMany({
+      where: {
+        companyId,
+        status: 'active',
+        expiresAt: { lt: new Date() },
+      },
+      data: { status: 'closed' },
+    });
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -67,6 +75,14 @@ export class DashboardService {
   }
 
   async getAdminDashboard() {
+    await this.prisma.job.updateMany({
+      where: {
+        status: 'active',
+        expiresAt: { lt: new Date() },
+      },
+      data: { status: 'closed' },
+    });
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 

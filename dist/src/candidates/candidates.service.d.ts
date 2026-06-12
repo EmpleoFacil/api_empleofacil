@@ -106,6 +106,7 @@ export declare class CandidatesService {
                 city: string | null;
                 country: string | null;
                 companyId: string;
+                customCategory: string | null;
                 title: string;
                 description: string | null;
                 requirements: string[];
@@ -114,6 +115,7 @@ export declare class CandidatesService {
                 salaryMax: number | null;
                 employmentType: string | null;
                 modality: string | null;
+                expiresAt: Date | null;
                 categoryId: string | null;
             };
         } & {
@@ -211,6 +213,7 @@ export declare class CandidatesService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -219,6 +222,7 @@ export declare class CandidatesService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         };
     } & {

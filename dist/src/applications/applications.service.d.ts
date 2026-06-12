@@ -78,6 +78,7 @@ export declare class ApplicationsService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -86,6 +87,7 @@ export declare class ApplicationsService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         };
     } & {
@@ -178,6 +180,7 @@ export declare class ApplicationsService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -186,6 +189,7 @@ export declare class ApplicationsService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         };
         notes: ({
@@ -253,6 +257,7 @@ export declare class ApplicationsService {
             city: string | null;
             country: string | null;
             companyId: string;
+            customCategory: string | null;
             title: string;
             description: string | null;
             requirements: string[];
@@ -261,6 +266,7 @@ export declare class ApplicationsService {
             salaryMax: number | null;
             employmentType: string | null;
             modality: string | null;
+            expiresAt: Date | null;
             categoryId: string | null;
         };
     } & {
