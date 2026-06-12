@@ -9,14 +9,16 @@ async function bootstrap() {
     app.enableCors({ origin: true, credentials: true });
     app.setGlobalPrefix('api');
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
-    const config = new swagger_1.DocumentBuilder()
-        .setTitle('Empleo API')
-        .setDescription('API centralizada para plataforma Empleo')
-        .setVersion('1.0')
-        .addBearerAuth()
-        .build();
-    const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('docs', app, document);
+    if (process.env.NODE_ENV !== 'production') {
+        const config = new swagger_1.DocumentBuilder()
+            .setTitle('Empleo API')
+            .setDescription('API centralizada para plataforma Empleo')
+            .setVersion('1.0')
+            .addBearerAuth()
+            .build();
+        const document = swagger_1.SwaggerModule.createDocument(app, config);
+        swagger_1.SwaggerModule.setup('docs', app, document);
+    }
     await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
