@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -25,7 +25,19 @@ export class DocumentsController {
   @Post('upload')
   @Roles('candidate')
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        const extension = file.originalname.split('.').pop()?.toLowerCase();
+        if (!extension || !['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'].includes(extension)) {
+          callback(new BadRequestException('Formato no permitido.'), false);
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
   upload(
     @CurrentUser() user: AuthUser,
     @Body() dto: UploadDocumentDto,
@@ -62,7 +74,7 @@ export class DocumentsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('candidate/:candidateId')
   @Roles('company_admin', 'super_admin')
-  listByCandidateId(@Param('candidateId') candidateId: string) {
-    return this.documentsService.listByCandidateId(candidateId);
+  listByCandidateId(@Param('candidateId') candidateId: string, @CurrentUser() user: AuthUser) {
+    return this.documentsService.listByCandidateId(candidateId, user);
   }
 }

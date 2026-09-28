@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 import type { AuthUser } from '../common/types/auth-user';
@@ -22,61 +22,123 @@ export class DocumentsService {
     if (!user.candidateId) {
       throw new ForbiddenException('Usuario no es candidato.');
     }
-
-    let fileUrl: string | null = null;
-
-    if (file) {
-      const ext = extname(file.originalname);
-      const fileName = `${randomUUID()}${ext}`;
-      fileUrl = await this.storage.upload(file, fileName, user.candidateId);
-
-      if (dto.replace) {
-        const existing = await this.prisma.candidateDocument.findFirst({
-          where: { candidateId: user.candidateId, type: dto.type },
-          orderBy: { uploadedAt: 'desc' },
-        });
-
-        if (existing) {
-          await this.prisma.candidateDocument.delete({ where: { id: existing.id } });
-        }
-      }
+    if (!file) {
+      throw new BadRequestException('Selecciona un archivo para subir.');
     }
 
-    return this.prisma.candidateDocument.create({
-      data: {
-        candidateId: user.candidateId,
-        type: dto.type,
-        fileUrl,
-        status: 'uploaded',
-        uploadedAt: new Date(),
-      },
-    });
+    const ext = extname(file.originalname).toLowerCase();
+    const mimeType = this.mimeTypeForExtension(ext);
+    if (!mimeType || !this.hasValidSignature(ext, file.buffer)) {
+      throw new BadRequestException('El contenido no coincide con un formato permitido.');
+    }
+
+    const existing = dto.replace
+      ? await this.prisma.candidateDocument.findFirst({
+          where: { candidateId: user.candidateId, type: dto.type },
+          orderBy: { uploadedAt: 'desc' },
+        })
+      : null;
+    const fileName = `${randomUUID()}${ext}`;
+    const fileUrl = await this.storage.uploadDocument(file, fileName, user.candidateId, mimeType);
+
+    let saved;
+    try {
+      saved = await this.prisma.candidateDocument.create({
+        data: {
+          candidateId: user.candidateId,
+          type: dto.type,
+          fileUrl,
+          status: 'uploaded',
+          uploadedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      await this.storage.removeDocumentFile(fileUrl);
+      throw error;
+    }
+
+    if (existing) {
+      try {
+        await this.prisma.candidateDocument.delete({ where: { id: existing.id } });
+        if (existing.fileUrl?.startsWith('storage://')) {
+          await this.storage.removeDocumentFile(existing.fileUrl);
+        }
+      } catch {
+        // Keep the newly uploaded document even if cleanup of its predecessor fails.
+      }
+    }
+    return this.withSignedFileUrl(saved);
   }
 
-  listForCandidate(user: AuthUser) {
+  async listForCandidate(user: AuthUser) {
     if (!user.candidateId) {
       throw new ForbiddenException('Usuario no es candidato.');
     }
 
-    return this.prisma.candidateDocument.findMany({
+    const documents = await this.prisma.candidateDocument.findMany({
       where: { candidateId: user.candidateId },
       orderBy: { uploadedAt: 'desc' },
     });
+    return this.withSignedFileUrls(documents);
   }
 
-  listPending() {
-    return this.prisma.candidateDocument.findMany({
+  async listPending() {
+    const documents = await this.prisma.candidateDocument.findMany({
       where: { status: { in: ['pending', 'uploaded'] } },
       include: { candidate: true },
       orderBy: { uploadedAt: 'desc' },
     });
+    return this.withSignedFileUrls(documents);
   }
 
-  listByCandidateId(candidateId: string) {
-    return this.prisma.candidateDocument.findMany({
+  async listByCandidateId(candidateId: string, user: AuthUser) {
+    if (user.role === 'company_admin') {
+      if (!user.companyId) {
+        throw new ForbiddenException('Usuario sin empresa asignada.');
+      }
+      const hasApplication = await this.prisma.application.count({
+        where: { candidateId, job: { companyId: user.companyId } },
+      });
+      if (!hasApplication) {
+        throw new ForbiddenException('No tienes acceso a los documentos de este candidato.');
+      }
+    }
+
+    const documents = await this.prisma.candidateDocument.findMany({
       where: { candidateId },
       orderBy: { uploadedAt: 'desc' },
     });
+    return this.withSignedFileUrls(documents);
+  }
+
+  private async withSignedFileUrl<T extends { fileUrl: string | null }>(document: T): Promise<T> {
+    if (!document.fileUrl?.startsWith('storage://')) return document;
+    return { ...document, fileUrl: await this.storage.createSignedDocumentUrl(document.fileUrl) };
+  }
+
+  private withSignedFileUrls<T extends { fileUrl: string | null }>(documents: T[]): Promise<T[]> {
+    return Promise.all(documents.map((document) => this.withSignedFileUrl(document)));
+  }
+
+  private mimeTypeForExtension(extension: string) {
+    const mimeTypes: Record<string, string> = {
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+    };
+    return mimeTypes[extension];
+  }
+
+  private hasValidSignature(extension: string, buffer: Buffer) {
+    if (extension === '.pdf') return buffer.subarray(0, 5).toString() === '%PDF-';
+    if (extension === '.png') return buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    if (extension === '.jpg' || extension === '.jpeg') return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    if (extension === '.docx') return buffer.subarray(0, 2).toString() === 'PK';
+    if (extension === '.doc') return buffer.subarray(0, 4).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0]));
+    return false;
   }
 
   async updateStatus(id: string, dto: UpdateDocumentStatusDto) {
