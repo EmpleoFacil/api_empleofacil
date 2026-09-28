@@ -1,4 +1,20 @@
-import { IsEmail, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { JobCategoryPreferenceDto } from '../../common/job-category-preference.dto';
+import { NICARAGUA_DEPARTMENTS } from '../../common/nicaragua-departments';
+import {
+  ArrayMaxSize,
+  ArrayUnique,
+  IsArray,
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 export class UpdateCandidateDto {
   @IsOptional()
@@ -8,6 +24,21 @@ export class UpdateCandidateDto {
   @IsOptional()
   @IsString()
   fullName?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(120)
+  age?: number;
+
+  @IsOptional()
+  @IsIn(NICARAGUA_DEPARTMENTS)
+  department?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  neighborhood?: string;
 
   @IsOptional()
   @IsString()
@@ -55,4 +86,12 @@ export class UpdateCandidateDto {
   @IsInt()
   @Min(0)
   profileCompletion?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(5)
+  @ArrayUnique((preference: JobCategoryPreferenceDto) => preference.categoryId)
+  @ValidateNested({ each: true })
+  @Type(() => JobCategoryPreferenceDto)
+  jobPreferences?: JobCategoryPreferenceDto[];
 }

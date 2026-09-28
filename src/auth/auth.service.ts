@@ -28,6 +28,8 @@ export class AuthService {
       throw new BadRequestException('Debes proporcionar email o teléfono.');
     }
 
+    await this.validateJobPreferences(dto.jobPreferences);
+
     const existing = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -54,11 +56,25 @@ export class AuthService {
         candidateProfile: {
           create: {
             fullName: dto.fullName,
-            city: dto.city,
-            country: dto.country,
+            age: dto.age,
+            department: dto.department,
+            neighborhood: dto.neighborhood,
+            city: dto.department,
+            country: 'Nicaragua',
             phone: dto.phone,
-            desiredJobType: dto.desiredJobType,
+            desiredJobType:
+              dto.jobPreferences[0]?.categoryId ?? dto.desiredJobType,
             profileCompletion: 0,
+            jobPreferences: {
+              create: dto.jobPreferences.map((preference) => ({
+                category: { connect: { id: preference.categoryId } },
+                specialties: {
+                  create: preference.specialtyIds.map((specialtyId) => ({
+                    specialty: { connect: { id: specialtyId } },
+                  })),
+                },
+              })),
+            },
           },
         },
       },
@@ -70,6 +86,50 @@ export class AuthService {
       user.candidateProfile?.id ?? null,
       null,
     );
+  }
+
+  private async validateJobPreferences(
+    preferences: RegisterCandidateDto['jobPreferences'],
+  ) {
+    if (!preferences || preferences.length < 1 || preferences.length > 5) {
+      throw new BadRequestException('Selecciona entre 1 y 5 rubros.');
+    }
+
+    const categoryIds = preferences.map((preference) => preference.categoryId);
+    if (new Set(categoryIds).size !== categoryIds.length) {
+      throw new BadRequestException('No repitas el mismo rubro.');
+    }
+
+    const activeCategoryCount = await this.prisma.jobCategory.count({
+      where: { id: { in: categoryIds }, isActive: true },
+    });
+    if (activeCategoryCount !== categoryIds.length) {
+      throw new BadRequestException('Uno de los rubros seleccionados no existe.');
+    }
+
+    for (const preference of preferences) {
+      if (
+        preference.specialtyIds.length === 0 ||
+        new Set(preference.specialtyIds).size !== preference.specialtyIds.length
+      ) {
+        throw new BadRequestException(
+          'Selecciona especialidades distintas para cada rubro.',
+        );
+      }
+
+      const specialtyCount = await this.prisma.jobSpecialty.count({
+        where: {
+          id: { in: preference.specialtyIds },
+          categoryId: preference.categoryId,
+          isActive: true,
+        },
+      });
+      if (specialtyCount !== preference.specialtyIds.length) {
+        throw new BadRequestException(
+          'Una especialidad no corresponde al rubro seleccionado.',
+        );
+      }
+    }
   }
 
   async login(dto: LoginDto) {

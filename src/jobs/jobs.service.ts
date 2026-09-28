@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -10,17 +10,25 @@ export class JobsService {
 
   getCategories() {
     return this.prisma.jobCategory.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        specialties: { some: { isActive: true } },
+      },
       select: {
         id: true,
         name: true,
         icon: true,
+        specialties: {
+          where: { isActive: true },
+          select: { id: true, name: true, categoryId: true },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        },
       },
-      orderBy: { name: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     });
   }
 
-  async getRecommended(user: AuthUser, categoryId?: string) {
+  async getRecommended(user: AuthUser, categoryId?: string, specialtyId?: string) {
     await this.closeExpiredJobs();
 
     if (!user.candidateId) {
@@ -28,28 +36,59 @@ export class JobsService {
         where: {
           status: 'active',
           ...(categoryId && { categoryId }),
+          ...(specialtyId && {
+            specialtySelections: { some: { specialtyId } },
+          }),
         },
         include: {
           company: { select: { id: true, name: true, logoUrl: true } },
           category: true,
+          specialtySelections: { include: { specialty: true } },
         },
         take: 20,
         orderBy: { createdAt: 'desc' },
       });
     }
 
-    const candidate = await this.prisma.candidateProfile.findUnique({
-      where: { id: user.candidateId },
+    const preferences = await this.prisma.candidateJobPreference.findMany({
+      where: { candidateId: user.candidateId },
+      select: {
+        categoryId: true,
+        specialties: { select: { specialtyId: true } },
+      },
     });
+    const preferredCategoryIds = preferences.map((preference) => preference.categoryId);
+    const preferredSpecialtyIds = preferences.flatMap((preference) =>
+      preference.specialties.map((specialty) => specialty.specialtyId),
+    );
 
     const jobs = await this.prisma.job.findMany({
       where: {
         status: 'active',
         ...(categoryId && { categoryId }),
+        ...(specialtyId && {
+          specialtySelections: { some: { specialtyId } },
+        }),
+        ...(preferences.length > 0 && {
+          OR: [
+            {
+              specialtySelections: {
+                some: { specialtyId: { in: preferredSpecialtyIds } },
+              },
+            },
+            {
+              AND: [
+                { categoryId: { in: preferredCategoryIds } },
+                { specialtySelections: { none: {} } },
+              ],
+            },
+          ],
+        }),
       },
       include: {
         company: { select: { id: true, name: true, logoUrl: true } },
         category: true,
+        specialtySelections: { include: { specialty: true } },
         applications: {
           where: { candidateId: user.candidateId },
           select: { id: true, status: true },
@@ -72,7 +111,14 @@ export class JobsService {
     }));
   }
 
-  async search(query?: string, city?: string, categoryId?: string, page = 1, limit = 20) {
+  async search(
+    query?: string,
+    city?: string,
+    categoryId?: string,
+    specialtyId?: string,
+    page = 1,
+    limit = 20,
+  ) {
     await this.closeExpiredJobs();
 
     const skip = (page - 1) * limit;
@@ -99,6 +145,10 @@ export class JobsService {
       where.categoryId = categoryId;
     }
 
+    if (specialtyId) {
+      where.specialtySelections = { some: { specialtyId } };
+    }
+
     if (!where.AND.length) {
       delete where.AND;
     }
@@ -109,6 +159,7 @@ export class JobsService {
         include: {
           company: { select: { id: true, name: true, logoUrl: true } },
           category: true,
+          specialtySelections: { include: { specialty: true } },
         },
         skip,
         take: limit,
@@ -133,17 +184,36 @@ export class JobsService {
     await this.closeExpiredJobs();
 
     if (user.role === 'super_admin') {
-      return this.prisma.job.findMany({ include: { company: true } });
+      return this.prisma.job.findMany({
+        include: {
+          company: true,
+          category: true,
+          specialtySelections: { include: { specialty: true } },
+        },
+      });
     }
 
     if (user.role === 'company_admin') {
       if (!user.companyId) {
         return [];
       }
-      return this.prisma.job.findMany({ where: { companyId: user.companyId } });
+      return this.prisma.job.findMany({
+        where: { companyId: user.companyId },
+        include: {
+          category: true,
+          specialtySelections: { include: { specialty: true } },
+        },
+      });
     }
 
-    return this.prisma.job.findMany({ where: this.buildPublicActiveWhere() });
+    return this.prisma.job.findMany({
+      where: this.buildPublicActiveWhere(),
+      include: {
+        company: { select: { id: true, name: true, logoUrl: true } },
+        category: true,
+        specialtySelections: { include: { specialty: true } },
+      },
+    });
   }
 
   async getCompanyJobs(user: AuthUser, query?: string, city?: string, status?: string, page = 1, limit = 10) {
@@ -170,6 +240,8 @@ export class JobsService {
       this.prisma.job.findMany({
         where,
         include: {
+          category: true,
+          specialtySelections: { include: { specialty: true } },
           _count: { select: { applications: true } },
         },
         skip,
@@ -245,6 +317,8 @@ export class JobsService {
         where,
         include: {
           company: { select: { id: true, name: true } },
+          category: true,
+          specialtySelections: { include: { specialty: true } },
           _count: { select: { applications: true } },
         },
         skip,
@@ -286,7 +360,11 @@ export class JobsService {
 
     const job = await this.prisma.job.findUnique({
       where: { id },
-      include: { company: true, category: true },
+      include: {
+        company: true,
+        category: true,
+        specialtySelections: { include: { specialty: true } },
+      },
     });
 
     if (!job) {
@@ -306,13 +384,13 @@ export class JobsService {
 
   async create(user: AuthUser, dto: CreateJobDto) {
     const companyId = this.resolveCompanyId(user, dto.companyId);
-    const categoryId = dto.categoryId && dto.categoryId !== 'other' ? dto.categoryId : null;
+    const catalog = await this.resolveJobCatalog(dto.categoryId, dto.specialtyIds ?? []);
     const customCategory = dto.customCategory?.trim() || null;
 
     return this.prisma.job.create({
       data: {
         companyId,
-        categoryId,
+        categoryId: catalog.categoryId,
         customCategory,
         title: dto.title,
         description: dto.description,
@@ -326,6 +404,15 @@ export class JobsService {
         modality: dto.modality,
         status: (dto.status ?? 'active') as any,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
+        specialtySelections: {
+          create: catalog.specialtyIds.map((specialtyId) => ({
+            specialty: { connect: { id: specialtyId } },
+          })),
+        },
+      },
+      include: {
+        category: true,
+        specialtySelections: { include: { specialty: true } },
       },
     });
   }
@@ -333,7 +420,10 @@ export class JobsService {
   async update(id: string, user: AuthUser, dto: UpdateJobDto) {
     await this.closeExpiredJobs();
 
-    const job = await this.prisma.job.findUnique({ where: { id } });
+    const job = await this.prisma.job.findUnique({
+      where: { id },
+      include: { specialtySelections: true },
+    });
 
     if (!job) {
       throw new NotFoundException('Vacante no encontrada.');
@@ -343,14 +433,29 @@ export class JobsService {
       throw new ForbiddenException('No tienes acceso a esta vacante.');
     }
 
-    const categoryId =
-      dto.categoryId === undefined ? undefined : dto.categoryId && dto.categoryId !== 'other' ? dto.categoryId : null;
+    const requestedCategoryId =
+      dto.categoryId === undefined
+        ? job.categoryId
+        : dto.categoryId && dto.categoryId !== 'other'
+          ? dto.categoryId
+          : null;
+    const categoryChanged =
+      dto.categoryId !== undefined && requestedCategoryId !== job.categoryId;
+    const requestedSpecialtyIds =
+      dto.specialtyIds ??
+      (categoryChanged
+        ? []
+        : job.specialtySelections.map((selection) => selection.specialtyId));
+    const catalog = await this.resolveJobCatalog(
+      requestedCategoryId ?? undefined,
+      requestedSpecialtyIds,
+    );
     const customCategory = dto.customCategory === undefined ? undefined : dto.customCategory.trim() || null;
 
     return this.prisma.job.update({
       where: { id },
       data: {
-        categoryId,
+        categoryId: catalog.categoryId,
         customCategory,
         title: dto.title,
         description: dto.description,
@@ -364,8 +469,68 @@ export class JobsService {
         modality: dto.modality,
         status: dto.status as any,
         expiresAt: dto.expiresAt === undefined ? undefined : dto.expiresAt ? new Date(dto.expiresAt) : null,
+        ...(dto.specialtyIds !== undefined || categoryChanged
+          ? {
+              specialtySelections: {
+                deleteMany: {},
+                create: catalog.specialtyIds.map((specialtyId) => ({
+                  specialty: { connect: { id: specialtyId } },
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        category: true,
+        specialtySelections: { include: { specialty: true } },
       },
     });
+  }
+
+  private async resolveJobCatalog(
+    requestedCategoryId: string | null | undefined,
+    specialtyIds: string[],
+  ) {
+    let categoryId = requestedCategoryId === 'other' ? null : requestedCategoryId ?? null;
+    const uniqueSpecialtyIds = [...new Set(specialtyIds)];
+    if (uniqueSpecialtyIds.length !== specialtyIds.length) {
+      throw new BadRequestException('No repitas una especialidad en la vacante.');
+    }
+
+    const specialties = uniqueSpecialtyIds.length
+      ? await this.prisma.jobSpecialty.findMany({
+          where: { id: { in: uniqueSpecialtyIds }, isActive: true },
+          select: { id: true, categoryId: true },
+        })
+      : [];
+    if (specialties.length !== uniqueSpecialtyIds.length) {
+      throw new BadRequestException('Una especialidad seleccionada no existe.');
+    }
+
+    const specialtyCategoryIds = [...new Set(specialties.map((item) => item.categoryId))];
+    if (categoryId == null && specialtyCategoryIds.length === 1) {
+      categoryId = specialtyCategoryIds[0];
+    }
+    if (specialtyCategoryIds.length > 1 ||
+        (specialtyCategoryIds.length === 1 && specialtyCategoryIds[0] !== categoryId)) {
+      throw new BadRequestException(
+        'Las especialidades deben pertenecer al rubro de la vacante.',
+      );
+    }
+
+    if (categoryId) {
+      const category = await this.prisma.jobCategory.findFirst({
+        where: {
+          id: categoryId,
+          isActive: true,
+          specialties: { some: { isActive: true } },
+        },
+        select: { id: true },
+      });
+      if (!category) throw new BadRequestException('El rubro seleccionado no existe.');
+    }
+
+    return { categoryId, specialtyIds: uniqueSpecialtyIds };
   }
 
   async remove(id: string, user: AuthUser) {

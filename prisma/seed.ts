@@ -17,6 +17,10 @@ async function main() {
   await prisma.application.deleteMany();
   await prisma.savedJob.deleteMany();
   await prisma.candidateDocument.deleteMany();
+  await prisma.jobSpecialtySelection.deleteMany();
+  await prisma.candidateJobPreferenceSpecialty.deleteMany();
+  await prisma.candidateJobPreference.deleteMany();
+  await prisma.jobSpecialty.deleteMany();
   await prisma.job.deleteMany();
   await prisma.jobCategory.deleteMany();
   await prisma.documentType.deleteMany();
@@ -74,12 +78,52 @@ async function main() {
   
   await prisma.jobCategory.createMany({
     data: [
-      { id: 'security', name: 'Seguridad', icon: 'shield' },
-      { id: 'cleaning', name: 'Limpieza', icon: 'broom' },
-      { id: 'janitor', name: 'Conserjería', icon: 'keys' },
-      { id: 'warehouse', name: 'Bodega', icon: 'box' },
-      { id: 'customer_service', name: 'Atención al cliente', icon: 'headset' },
-      { id: 'administration', name: 'Administración', icon: 'clipboard' },
+      { id: 'cleaning', name: 'Servicios del hogar', icon: 'broom', sortOrder: 1 },
+      { id: 'security', name: 'Seguridad', icon: 'shield', sortOrder: 2 },
+      { id: 'janitor', name: 'Servicios generales', icon: 'keys', sortOrder: 3 },
+      { id: 'warehouse', name: 'Logística y bodega', icon: 'box', sortOrder: 4 },
+      { id: 'customer_service', name: 'Atención al cliente y ventas', icon: 'headset', sortOrder: 5 },
+      { id: 'administration', name: 'Administración y oficina', icon: 'clipboard', sortOrder: 6 },
+    ],
+  });
+
+  await prisma.jobSpecialty.createMany({
+    data: [
+      { id: 'home_nanny', categoryId: 'cleaning', name: 'Niñera', sortOrder: 1 },
+      { id: 'home_assistant', categoryId: 'cleaning', name: 'Asistente del hogar', sortOrder: 2 },
+      { id: 'home_cleaning', categoryId: 'cleaning', name: 'Limpieza', sortOrder: 3 },
+      { id: 'home_gardening', categoryId: 'cleaning', name: 'Jardinería', sortOrder: 4 },
+      { id: 'home_painting', categoryId: 'cleaning', name: 'Pintura', sortOrder: 5 },
+      { id: 'home_cooking', categoryId: 'cleaning', name: 'Cocina', sortOrder: 6 },
+      { id: 'home_elder_care', categoryId: 'cleaning', name: 'Cuido de adultos mayores', sortOrder: 7 },
+      { id: 'home_laundry', categoryId: 'cleaning', name: 'Lavandería y planchado', sortOrder: 8 },
+      { id: 'home_plumbing', categoryId: 'cleaning', name: 'Fontanería doméstica', sortOrder: 9 },
+      { id: 'home_electrical', categoryId: 'cleaning', name: 'Electricidad doméstica', sortOrder: 10 },
+      { id: 'home_repairs', categoryId: 'cleaning', name: 'Reparaciones del hogar', sortOrder: 11 },
+      { id: 'security_guard', categoryId: 'security', name: 'Guarda de seguridad', sortOrder: 1 },
+      { id: 'security_cctv', categoryId: 'security', name: 'Operador de CCTV', sortOrder: 2 },
+      { id: 'security_access', categoryId: 'security', name: 'Control de acceso', sortOrder: 3 },
+      { id: 'security_patrol', categoryId: 'security', name: 'Patrullaje', sortOrder: 4 },
+      { id: 'security_supervisor', categoryId: 'security', name: 'Supervisor de seguridad', sortOrder: 5 },
+      { id: 'general_janitor', categoryId: 'janitor', name: 'Conserjería', sortOrder: 1 },
+      { id: 'general_maintenance', categoryId: 'janitor', name: 'Mantenimiento general', sortOrder: 2 },
+      { id: 'general_gardening', categoryId: 'janitor', name: 'Jardinería de áreas comunes', sortOrder: 3 },
+      { id: 'warehouse_assistant', categoryId: 'warehouse', name: 'Auxiliar de bodega', sortOrder: 1 },
+      { id: 'warehouse_inventory', categoryId: 'warehouse', name: 'Control de inventario', sortOrder: 2 },
+      { id: 'warehouse_loading', categoryId: 'warehouse', name: 'Carga y descarga', sortOrder: 3 },
+      { id: 'warehouse_forklift', categoryId: 'warehouse', name: 'Operador de montacargas', sortOrder: 4 },
+      { id: 'warehouse_shipping', categoryId: 'warehouse', name: 'Recepción y despacho', sortOrder: 5 },
+      { id: 'service_customer', categoryId: 'customer_service', name: 'Atención al cliente', sortOrder: 1 },
+      { id: 'service_call_center', categoryId: 'customer_service', name: 'Call center', sortOrder: 2 },
+      { id: 'service_cashier', categoryId: 'customer_service', name: 'Caja y cobro', sortOrder: 3 },
+      { id: 'service_sales', categoryId: 'customer_service', name: 'Asesoría de ventas', sortOrder: 4 },
+      { id: 'service_store', categoryId: 'customer_service', name: 'Supervisión de tienda', sortOrder: 5 },
+      { id: 'admin_assistant', categoryId: 'administration', name: 'Asistente administrativo', sortOrder: 1 },
+      { id: 'admin_reception', categoryId: 'administration', name: 'Recepción', sortOrder: 2 },
+      { id: 'admin_data_entry', categoryId: 'administration', name: 'Digitación de datos', sortOrder: 3 },
+      { id: 'admin_accounting', categoryId: 'administration', name: 'Asistente contable', sortOrder: 4 },
+      { id: 'admin_hr', categoryId: 'administration', name: 'Asistente de recursos humanos', sortOrder: 5 },
+      { id: 'admin_documents', categoryId: 'administration', name: 'Gestión de documentos', sortOrder: 6 },
     ],
   });
 
@@ -355,6 +399,9 @@ async function main() {
       employmentType: 'Tiempo completo',
       modality: 'presencial',
       status: 'active',
+      specialtySelections: {
+        create: [{ specialty: { connect: { id: 'security_guard' } } }],
+      },
     },
   });
 
@@ -374,6 +421,9 @@ async function main() {
       employmentType: 'Tiempo completo',
       modality: 'presencial',
       status: 'active',
+      specialtySelections: {
+        create: [{ specialty: { connect: { id: 'home_cleaning' } } }],
+      },
     },
   });
 
@@ -393,6 +443,9 @@ async function main() {
       employmentType: 'Tiempo completo',
       modality: 'presencial',
       status: 'active',
+      specialtySelections: {
+        create: [{ specialty: { connect: { id: 'warehouse_assistant' } } }],
+      },
     },
   });
 

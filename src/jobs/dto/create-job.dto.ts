@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { ArrayUnique, IsArray, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateJobDto {
   @IsString()
@@ -12,6 +12,12 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   customCategory?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsString({ each: true })
+  specialtyIds?: string[];
 
   @IsOptional()
   @IsString()

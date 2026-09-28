@@ -24,6 +24,13 @@ export class CandidatesService {
     return this.prisma.candidateProfile.findUnique({
       where: { id: user.candidateId },
       include: {
+        jobPreferences: {
+          include: {
+            category: true,
+            specialties: { include: { specialty: true } },
+          },
+          orderBy: { category: { sortOrder: 'asc' } },
+        },
         user: {
           select: {
             id: true,
@@ -41,12 +48,22 @@ export class CandidatesService {
       throw new ForbiddenException('Usuario no es candidato.');
     }
 
+    if (dto.jobPreferences !== undefined) {
+      await this.validateJobPreferences(dto.jobPreferences);
+    }
+
     const candidateData = {
       fullName: dto.fullName,
-      city: dto.city,
+      age: dto.age,
+      department: dto.department,
+      neighborhood: dto.neighborhood,
+      city: dto.department ?? dto.city,
       country: dto.country,
       phone: dto.phone,
-      desiredJobType: dto.desiredJobType,
+      desiredJobType:
+        dto.jobPreferences === undefined
+          ? dto.desiredJobType
+          : dto.jobPreferences[0]?.categoryId ?? null,
       availability: dto.availability,
       salaryExpectationMin: dto.salaryExpectationMin,
       salaryExpectationMax: dto.salaryExpectationMax,
@@ -71,10 +88,36 @@ export class CandidatesService {
         });
       }
 
+      if (dto.jobPreferences !== undefined) {
+        await tx.candidateJobPreference.deleteMany({
+          where: { candidateId: user.candidateId! },
+        });
+        for (const preference of dto.jobPreferences) {
+          await tx.candidateJobPreference.create({
+            data: {
+              candidateId: user.candidateId!,
+              categoryId: preference.categoryId,
+              specialties: {
+                create: preference.specialtyIds.map((specialtyId) => ({
+                  specialty: { connect: { id: specialtyId } },
+                })),
+              },
+            },
+          });
+        }
+      }
+
       return tx.candidateProfile.update({
         where: { id: user.candidateId! },
         data: candidateData,
         include: {
+          jobPreferences: {
+            include: {
+              category: true,
+              specialties: { include: { specialty: true } },
+            },
+            orderBy: { category: { sortOrder: 'asc' } },
+          },
           user: {
             select: {
               id: true,
@@ -86,6 +129,53 @@ export class CandidatesService {
         },
       });
     });
+  }
+
+  private async validateJobPreferences(
+    preferences: NonNullable<UpdateCandidateDto['jobPreferences']>,
+  ) {
+    if (preferences.length > 5) {
+      throw new BadRequestException('Puedes seleccionar hasta 5 rubros.');
+    }
+
+    const categoryIds = preferences.map((preference) => preference.categoryId);
+    if (new Set(categoryIds).size !== categoryIds.length) {
+      throw new BadRequestException('No repitas el mismo rubro.');
+    }
+
+    const activeCategoryCount = categoryIds.length
+      ? await this.prisma.jobCategory.count({
+          where: { id: { in: categoryIds }, isActive: true },
+        })
+      : 0;
+    if (activeCategoryCount !== categoryIds.length) {
+      throw new BadRequestException('Uno de los rubros seleccionados no existe.');
+    }
+
+    for (const preference of preferences) {
+      if (preference.specialtyIds.length === 0) {
+        throw new BadRequestException(
+          'Selecciona al menos una especialidad para cada rubro.',
+        );
+      }
+      if (new Set(preference.specialtyIds).size !== preference.specialtyIds.length) {
+        throw new BadRequestException('No repitas una especialidad.');
+      }
+      const specialtyCount = preference.specialtyIds.length
+        ? await this.prisma.jobSpecialty.count({
+            where: {
+              id: { in: preference.specialtyIds },
+              categoryId: preference.categoryId,
+              isActive: true,
+            },
+          })
+        : 0;
+      if (specialtyCount !== preference.specialtyIds.length) {
+        throw new BadRequestException(
+          'Una especialidad no corresponde al rubro seleccionado.',
+        );
+      }
+    }
   }
 
   async uploadMyPhoto(user: AuthUser, file?: Express.Multer.File) {
@@ -143,7 +233,15 @@ export class CandidatesService {
   async list(user: AuthUser) {
     if (user.role === 'super_admin') {
       return this.prisma.candidateProfile.findMany({
-        include: { user: true },
+        include: {
+          user: true,
+          jobPreferences: {
+            include: {
+              category: true,
+              specialties: { include: { specialty: true } },
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       });
     }
@@ -155,7 +253,15 @@ export class CandidatesService {
             some: { job: { companyId: user.companyId } },
           },
         },
-        include: { user: true },
+        include: {
+          user: true,
+          jobPreferences: {
+            include: {
+              category: true,
+              specialties: { include: { specialty: true } },
+            },
+          },
+        },
       });
     }
 
@@ -165,7 +271,16 @@ export class CandidatesService {
   async getById(id: string, user: AuthUser) {
     const candidate = await this.prisma.candidateProfile.findUnique({
       where: { id },
-      include: { user: true, applications: { include: { job: true } } },
+      include: {
+        user: true,
+        jobPreferences: {
+          include: {
+            category: true,
+            specialties: { include: { specialty: true } },
+          },
+        },
+        applications: { include: { job: true } },
+      },
     });
 
     if (!candidate) {
@@ -209,6 +324,12 @@ export class CandidatesService {
         where,
         include: {
           user: { select: { email: true } },
+          jobPreferences: {
+            include: {
+              category: true,
+              specialties: { include: { specialty: true } },
+            },
+          },
           documents: { select: { type: true } },
           _count: { select: { applications: true } },
         },

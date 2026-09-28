@@ -26,8 +26,9 @@ export class JobsController {
   getRecommended(
     @CurrentUser() user: AuthUser,
     @Query('category') categoryId?: string,
+    @Query('specialty') specialtyId?: string,
   ) {
-    return this.jobsService.getRecommended(user, categoryId);
+    return this.jobsService.getRecommended(user, categoryId, specialtyId);
   }
 
   @Get('search')
@@ -35,9 +36,16 @@ export class JobsController {
     @Query('search') query?: string,
     @Query('city') city?: string,
     @Query('category') categoryId?: string,
+    @Query('specialty') specialtyId?: string,
     @Query('page') page?: string,
   ) {
-    return this.jobsService.search(query, city, categoryId, page ? parseInt(page) : 1);
+    return this.jobsService.search(
+      query,
+      city,
+      categoryId,
+      specialtyId,
+      page ? parseInt(page) : 1,
+    );
   }
 
   @ApiBearerAuth()

@@ -6,18 +6,28 @@ import type { AuthUser } from '../common/types/auth-user';
 export class SearchService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async searchForCompany(user: AuthUser, query: string, type: string) {
+  async searchForCompany(
+    user: AuthUser,
+    query: string,
+    type: string,
+    categoryId?: string,
+    specialtyId?: string,
+  ) {
     if (!user.companyId) {
       throw new ForbiddenException('Usuario sin empresa asignada');
     }
 
-    const searchTerm = query.toLowerCase().trim();
+    const searchTerm = (query ?? '').toLowerCase().trim();
     const results: Record<string, unknown[]> = {};
 
     if (type === 'all' || type === 'jobs') {
       const jobs = await this.prisma.job.findMany({
         where: {
           companyId: user.companyId,
+          ...(categoryId && { categoryId }),
+          ...(specialtyId && {
+            specialtySelections: { some: { specialtyId } },
+          }),
           OR: [
             { title: { contains: searchTerm, mode: 'insensitive' } },
             { description: { contains: searchTerm, mode: 'insensitive' } },
@@ -29,6 +39,10 @@ export class SearchService {
           title: true,
           status: true,
           city: true,
+          category: { select: { id: true, name: true } },
+          specialtySelections: {
+            include: { specialty: { select: { id: true, name: true } } },
+          },
         },
       });
       results.jobs = jobs;
@@ -40,12 +54,38 @@ export class SearchService {
           job: { companyId: user.companyId },
           candidate: {
             fullName: { contains: searchTerm, mode: 'insensitive' },
+            ...(categoryId || specialtyId
+              ? {
+                  jobPreferences: {
+                    some: {
+                      ...(categoryId && { categoryId }),
+                      ...(specialtyId && {
+                        specialties: { some: { specialtyId } },
+                      }),
+                    },
+                  },
+                }
+              : {}),
           },
         },
         take: 10,
         include: {
           candidate: {
-            select: { id: true, fullName: true, city: true },
+            select: {
+              id: true,
+              fullName: true,
+              city: true,
+              department: true,
+              age: true,
+              jobPreferences: {
+                include: {
+                  category: { select: { id: true, name: true } },
+                  specialties: {
+                    include: { specialty: { select: { id: true, name: true } } },
+                  },
+                },
+              },
+            },
           },
           job: {
             select: { id: true, title: true },

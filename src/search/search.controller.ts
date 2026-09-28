@@ -23,7 +23,15 @@ export class SearchController {
     @CurrentUser() user: AuthUser,
     @Query('q') query: string,
     @Query('type') type?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('specialtyId') specialtyId?: string,
   ) {
-    return this.searchService.searchForCompany(user, query, type ?? 'all');
+    return this.searchService.searchForCompany(
+      user,
+      query,
+      type ?? 'all',
+      categoryId,
+      specialtyId,
+    );
   }
 }

@@ -151,6 +151,9 @@ model CandidateProfile {
   userId               String   @unique
   fullName             String
   photoUrl             String?
+  age                  Int?
+  department           String?
+  neighborhood         String?
   city                 String?
   country              String?  @default("Nicaragua")
   phone                String?
@@ -172,6 +175,7 @@ model CandidateProfile {
   messages          Message[]
   messageResponses  MessageResponse[]
   savedJobs         SavedJob[]
+  jobPreferences    CandidateJobPreference[]
 
   @@index([userId])
   @@index([desiredJobType])
@@ -231,9 +235,26 @@ model JobCategory {
   id       String  @id
   name     String
   icon     String?
+  sortOrder Int    @default(0)
   isActive Boolean @default(true)
 
-  jobs Job[]
+  jobs                  Job[]
+  specialties           JobSpecialty[]
+  candidatePreferences  CandidateJobPreference[]
+}
+
+model JobSpecialty {
+  id         String  @id
+  categoryId String
+  name       String
+  sortOrder  Int     @default(0)
+  isActive   Boolean @default(true)
+
+  category            JobCategory                       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  candidateSelections CandidateJobPreferenceSpecialty[]
+  jobSelections       JobSpecialtySelection[]
+
+  @@index([categoryId, isActive, sortOrder])
 }
 
 model Job {
@@ -259,6 +280,7 @@ model Job {
 
   company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   category     JobCategory?  @relation(fields: [categoryId], references: [id])
+  specialtySelections JobSpecialtySelection[]
   applications Application[]
   savedJobs    SavedJob[]
   interviews   Interview[]
@@ -268,6 +290,42 @@ model Job {
   @@index([status])
   @@index([city])
   @@index([expiresAt])
+}
+
+model CandidateJobPreference {
+  candidateId String
+  categoryId  String
+  createdAt   DateTime @default(now())
+
+  candidate  CandidateProfile                    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  category   JobCategory                         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  specialties CandidateJobPreferenceSpecialty[]
+
+  @@id([candidateId, categoryId])
+  @@index([categoryId])
+}
+
+model CandidateJobPreferenceSpecialty {
+  candidateId String
+  categoryId  String
+  specialtyId String
+
+  preference CandidateJobPreference @relation(fields: [candidateId, categoryId], references: [candidateId, categoryId], onDelete: Cascade)
+  specialty  JobSpecialty           @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([candidateId, categoryId, specialtyId])
+  @@index([specialtyId])
+}
+
+model JobSpecialtySelection {
+  jobId       String
+  specialtyId String
+
+  job       Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  specialty JobSpecialty @relation(fields: [specialtyId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, specialtyId])
+  @@index([specialtyId])
 }
 
 model Application {
