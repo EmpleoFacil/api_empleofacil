@@ -109,11 +109,10 @@ export class AuthService {
 
     for (const preference of preferences) {
       if (
-        preference.specialtyIds.length === 0 ||
         new Set(preference.specialtyIds).size !== preference.specialtyIds.length
       ) {
         throw new BadRequestException(
-          'Selecciona especialidades distintas para cada rubro.',
+          'No repitas una especialidad para el mismo rubro.',
         );
       }
 

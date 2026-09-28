@@ -1,5 +1,4 @@
 import {
-  ArrayMinSize,
   ArrayUnique,
   IsArray,
   IsNotEmpty,
@@ -12,7 +11,6 @@ export class JobCategoryPreferenceDto {
   categoryId: string;
 
   @IsArray()
-  @ArrayMinSize(1)
   @ArrayUnique()
   @IsString({ each: true })
   specialtyIds: string[];

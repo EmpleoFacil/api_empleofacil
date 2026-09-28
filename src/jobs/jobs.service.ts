@@ -61,6 +61,28 @@ export class JobsService {
     const preferredSpecialtyIds = preferences.flatMap((preference) =>
       preference.specialties.map((specialty) => specialty.specialtyId),
     );
+    const preferencesWithoutSpecialties = preferences
+      .filter((preference) => preference.specialties.length === 0)
+      .map((preference) => preference.categoryId);
+    const preferenceMatches: any[] = [];
+    if (preferredSpecialtyIds.length > 0) {
+      preferenceMatches.push({
+        specialtySelections: {
+          some: { specialtyId: { in: preferredSpecialtyIds } },
+        },
+      });
+    }
+    if (preferencesWithoutSpecialties.length > 0) {
+      preferenceMatches.push({
+        categoryId: { in: preferencesWithoutSpecialties },
+      });
+    }
+    preferenceMatches.push({
+      AND: [
+        { categoryId: { in: preferredCategoryIds } },
+        { specialtySelections: { none: {} } },
+      ],
+    });
 
     const jobs = await this.prisma.job.findMany({
       where: {
@@ -70,19 +92,7 @@ export class JobsService {
           specialtySelections: { some: { specialtyId } },
         }),
         ...(preferences.length > 0 && {
-          OR: [
-            {
-              specialtySelections: {
-                some: { specialtyId: { in: preferredSpecialtyIds } },
-              },
-            },
-            {
-              AND: [
-                { categoryId: { in: preferredCategoryIds } },
-                { specialtySelections: { none: {} } },
-              ],
-            },
-          ],
+          OR: preferenceMatches,
         }),
       },
       include: {

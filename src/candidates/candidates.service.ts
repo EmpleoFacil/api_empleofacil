@@ -153,11 +153,6 @@ export class CandidatesService {
     }
 
     for (const preference of preferences) {
-      if (preference.specialtyIds.length === 0) {
-        throw new BadRequestException(
-          'Selecciona al menos una especialidad para cada rubro.',
-        );
-      }
       if (new Set(preference.specialtyIds).size !== preference.specialtyIds.length) {
         throw new BadRequestException('No repitas una especialidad.');
       }
