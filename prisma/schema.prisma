@@ -150,6 +150,7 @@ model CandidateProfile {
   id                   String   @id @default(uuid())
   userId               String   @unique
   fullName             String
+  photoUrl             String?
   city                 String?
   country              String?  @default("Nicaragua")
   phone                String?

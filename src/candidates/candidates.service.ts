@@ -1,15 +1,20 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
 
 @Injectable()
 export class CandidatesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: SupabaseStorageService,
+  ) {}
 
   async getMe(user: AuthUser) {
     if (!user.candidateId) {
@@ -81,6 +86,58 @@ export class CandidatesService {
         },
       });
     });
+  }
+
+  async uploadMyPhoto(user: AuthUser, file?: Express.Multer.File) {
+    if (!user.candidateId) {
+      throw new ForbiddenException('Usuario no es candidato.');
+    }
+    if (!file) {
+      throw new BadRequestException('Selecciona una imagen.');
+    }
+
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowed.includes(file.mimetype)) {
+      throw new BadRequestException('Formato no permitido. Usa JPG, PNG o WEBP.');
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      throw new BadRequestException('La foto excede 2 MB.');
+    }
+
+    const url = await this.storage.upload(
+      file,
+      'profile-photo',
+      `candidates/${user.candidateId}`,
+    );
+    const photoUrl = `${url}?v=${Date.now()}`;
+    await this.prisma.candidateProfile.update({
+      where: { id: user.candidateId },
+      data: { photoUrl },
+    });
+
+    return { photoUrl };
+  }
+
+  async deleteMyPhoto(user: AuthUser) {
+    if (!user.candidateId) {
+      throw new ForbiddenException('Usuario no es candidato.');
+    }
+
+    const candidate = await this.prisma.candidateProfile.findUnique({
+      where: { id: user.candidateId },
+      select: { photoUrl: true },
+    });
+    if (!candidate) throw new NotFoundException('Candidato no encontrado.');
+
+    if (candidate.photoUrl) {
+      await this.storage.remove('profile-photo', `candidates/${user.candidateId}`);
+    }
+    await this.prisma.candidateProfile.update({
+      where: { id: user.candidateId },
+      data: { photoUrl: null },
+    });
+
+    return { photoUrl: null };
   }
 
   async list(user: AuthUser) {

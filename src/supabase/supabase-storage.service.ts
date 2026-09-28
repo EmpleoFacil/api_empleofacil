@@ -90,6 +90,22 @@ export class SupabaseStorageService {
     return `${this.supabaseUrl}/storage/v1/object/public/${this.bucket}/${filePath}`;
   }
 
+  async remove(fileName: string, folder?: string): Promise<void> {
+    const filePath = folder ? `${folder}/${fileName}` : fileName;
+    const res = await fetch(
+      `${this.storageBaseUrl}/object/${encodeURIComponent(this.bucket)}`,
+      {
+        method: 'DELETE',
+        headers: { ...this.serviceHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefixes: [filePath] }),
+      },
+    );
+    if (!res.ok && res.status !== 404) {
+      const detail = await res.text();
+      throw new Error(`Supabase file delete failed: ${detail}`);
+    }
+  }
+
   private async ensureDocumentsBucketExists(): Promise<void> {
     const bucketUrl = `${this.storageBaseUrl}/bucket/${encodeURIComponent(this.documentsBucket)}`;
     const bucketRes = await fetch(bucketUrl, { headers: this.serviceHeaders });

@@ -1,5 +1,19 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -25,6 +39,38 @@ export class CandidatesController {
   @Roles('candidate')
   updateMe(@CurrentUser() user: AuthUser, @Body() dto: UpdateCandidateDto) {
     return this.candidatesService.updateMe(user, dto);
+  }
+
+  @Post('me/photo')
+  @Roles('candidate')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 2 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+        if (!allowed.includes(file.mimetype)) {
+          callback(
+            new BadRequestException('Formato no permitido. Usa JPG, PNG o WEBP.'),
+            false,
+          );
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  uploadMyPhoto(
+    @CurrentUser() user: AuthUser,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.candidatesService.uploadMyPhoto(user, file);
+  }
+
+  @Delete('me/photo')
+  @Roles('candidate')
+  deleteMyPhoto(@CurrentUser() user: AuthUser) {
+    return this.candidatesService.deleteMyPhoto(user);
   }
 
   @Get('summary')
