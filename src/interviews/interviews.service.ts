@@ -171,9 +171,36 @@ export class InterviewsService {
       throw new ForbiddenException('No tienes acceso a esta entrevista.');
     }
 
-    return this.prisma.interview.update({
-      where: { id },
-      data: { status: dto.status as any },
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.interview.update({
+        where: { id },
+        data: { status: dto.status as any },
+      });
+
+      if (dto.status === 'completed') {
+        const upcomingInterviews = await tx.interview.count({
+          where: {
+            applicationId: interview.applicationId,
+            id: { not: id },
+            date: { gte: new Date() },
+            status: {
+              in: ['scheduled', 'pending_confirmation', 'confirmed', 'rescheduled'],
+            },
+          },
+        });
+
+        if (upcomingInterviews === 0) {
+          await tx.application.updateMany({
+            where: {
+              id: interview.applicationId,
+              status: { in: ['interview_scheduled', 'interview_confirmed'] },
+            },
+            data: { status: 'reviewing' },
+          });
+        }
+      }
+
+      return updated;
     });
   }
 
@@ -319,6 +346,28 @@ export class InterviewsService {
         where: { id: interview.applicationId },
         data: { status: data.moveApplicationStatus as any },
       });
+    } else if (
+      interview.applicationId &&
+      (interview.application.status === 'interview_scheduled' ||
+        interview.application.status === 'interview_confirmed')
+    ) {
+      const upcomingInterviews = await this.prisma.interview.count({
+        where: {
+          applicationId: interview.applicationId,
+          id: { not: id },
+          date: { gte: new Date() },
+          status: {
+            in: ['scheduled', 'pending_confirmation', 'confirmed', 'rescheduled'],
+          },
+        },
+      });
+
+      if (upcomingInterviews === 0) {
+        await this.prisma.application.update({
+          where: { id: interview.applicationId },
+          data: { status: 'reviewing' },
+        });
+      }
     }
 
     return updated;

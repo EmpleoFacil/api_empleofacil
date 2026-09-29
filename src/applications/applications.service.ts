@@ -120,42 +120,48 @@ export class ApplicationsService {
 
     const applications = await this.prisma.application.findMany({
       where: { candidateId: user.candidateId },
-      select: { status: true },
+      select: {
+        status: true,
+        interviews: {
+          where: {
+            date: { gte: new Date() },
+            status: {
+              in: ['scheduled', 'pending_confirmation', 'confirmed', 'rescheduled'],
+            },
+          },
+          select: { id: true },
+          take: 1,
+        },
+      },
     });
 
-    const summary = {
+    const hasUpcomingInterview = (application: (typeof applications)[number]) =>
+      application.interviews.length > 0;
+    const isInterviewStage = (status: string) =>
+      status === 'interview_scheduled' || status === 'interview_confirmed';
+    const isTerminal = (status: string) =>
+      status === 'hired' || status === 'rejected' || status === 'cancelled';
+
+    return {
       total: applications.length,
       enRevision: applications.filter(
-        (a) => a.status === 'applied' || a.status === 'reviewing',
+        (a) =>
+          !hasUpcomingInterview(a) &&
+          (a.status === 'applied' ||
+            a.status === 'reviewing' ||
+            isInterviewStage(a.status)),
       ).length,
       entrevista: applications.filter(
-        (a) =>
-          a.status === 'interview_scheduled' ||
-          a.status === 'interview_confirmed',
+        (a) => !isTerminal(a.status) && hasUpcomingInterview(a),
       ).length,
-      noSeleccionado: applications.filter((a) => a.status === 'rejected')
-        .length,
+      noSeleccionado: applications.filter((a) => a.status === 'rejected').length,
       postulado: applications.filter((a) => a.status === 'applied').length,
     };
-
-    return summary;
   }
 
   async getStatusSummary(user: AuthUser) {
-    if (!user.candidateId) {
-      throw new ForbiddenException('Usuario no es candidato.');
-    }
-
-    const applications = await this.prisma.application.findMany({
-      where: { candidateId: user.candidateId },
-      select: { status: true },
-    });
-
-    return {
-      enRevision: applications.filter(
-        (a) => a.status === 'applied' || a.status === 'reviewing',
-      ).length,
-    };
+    const summary = await this.getSummary(user);
+    return { enRevision: summary.enRevision };
   }
 
   listForCompany(user: AuthUser) {
