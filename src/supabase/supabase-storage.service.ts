@@ -134,8 +134,8 @@ export class SupabaseStorageService {
       return;
     }
 
-    if (bucketRes.status !== 404) {
-      const detail = await bucketRes.text();
+    const detail = await bucketRes.text();
+    if (bucketRes.status !== 404 && !this.isMissingDocumentsBucket(detail)) {
       throw new Error(`Supabase documents bucket check failed: ${detail}`);
     }
 
@@ -145,8 +145,25 @@ export class SupabaseStorageService {
       body: JSON.stringify({ id: this.documentsBucket, name: this.documentsBucket, ...options }),
     });
     if (!createRes.ok) {
-      const detail = await createRes.text();
-      throw new Error(`Supabase documents bucket create failed: ${detail}`);
+      const createError = await createRes.text();
+      throw new Error(`Supabase documents bucket create failed: ${createError}`);
+    }
+  }
+
+  private isMissingDocumentsBucket(responseBody: string): boolean {
+    try {
+      const body = JSON.parse(responseBody) as {
+        code?: unknown;
+        statusCode?: unknown;
+        httpStatusCode?: unknown;
+      };
+      return (
+        body.code === 'NoSuchBucket' ||
+        Number(body.statusCode) === 404 ||
+        Number(body.httpStatusCode) === 404
+      );
+    } catch {
+      return false;
     }
   }
 
