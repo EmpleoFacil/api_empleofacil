@@ -39,5 +39,10 @@ export class CreateCompanyDto {
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  planId?: string;
+
+  @IsOptional()
+  @IsString()
   status?: string;
 }

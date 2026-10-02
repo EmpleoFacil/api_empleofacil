@@ -58,6 +58,7 @@ export class CompaniesService {
         secondaryPhone: dto.secondaryPhone,
         country: dto.country,
         city: dto.city,
+        planId: dto.planId,
         status: (dto.status ?? 'active') as any,
       },
     });
@@ -81,6 +82,7 @@ export class CompaniesService {
         secondaryPhone: dto.secondaryPhone,
         country: dto.country,
         city: dto.city,
+        planId: dto.planId,
         status: dto.status as any,
       },
     });
