@@ -43,12 +43,23 @@ export class DocumentsService {
 
     let saved;
     try {
+      const isCv = dto.type === 'cv' || dto.type.startsWith('cv:');
+      const hasPrimaryCv = isCv
+        ? await this.prisma.candidateDocument.count({
+            where: {
+              candidateId: user.candidateId,
+              isPrimary: true,
+              type: { startsWith: 'cv' },
+            },
+          })
+        : 0;
       saved = await this.prisma.candidateDocument.create({
         data: {
           candidateId: user.candidateId,
           type: dto.type,
           fileUrl,
           status: 'uploaded',
+          isPrimary: isCv && (dto.primary === true || hasPrimaryCv === 0),
           uploadedAt: new Date(),
         },
       });
@@ -151,6 +162,27 @@ export class DocumentsService {
     return this.prisma.candidateDocument.update({
       where: { id },
       data: { status: dto.status as any, reviewedAt: new Date() },
+    });
+  }
+
+  async setPrimary(user: AuthUser, id: string) {
+    if (!user.candidateId) {
+      throw new ForbiddenException('Usuario no es candidato.');
+    }
+    const document = await this.prisma.candidateDocument.findFirst({
+      where: { id, candidateId: user.candidateId, type: { startsWith: 'cv' } },
+    });
+    if (!document) throw new NotFoundException('Currículum no encontrado.');
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.candidateDocument.updateMany({
+        where: { candidateId: user.candidateId!, type: { startsWith: 'cv' } },
+        data: { isPrimary: false },
+      });
+      return tx.candidateDocument.update({
+        where: { id: document.id },
+        data: { isPrimary: true },
+      });
     });
   }
 }

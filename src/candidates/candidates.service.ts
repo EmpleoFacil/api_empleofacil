@@ -21,7 +21,7 @@ export class CandidatesService {
       throw new ForbiddenException('Usuario no es candidato.');
     }
 
-    return this.prisma.candidateProfile.findUnique({
+    const candidate = await this.prisma.candidateProfile.findUnique({
       where: { id: user.candidateId },
       include: {
         jobPreferences: {
@@ -39,8 +39,16 @@ export class CandidatesService {
             secondaryPhone: true,
           },
         },
+        _count: { select: { applications: true, documents: true } },
       },
     });
+
+    if (!candidate) return null;
+    return {
+      ...candidate,
+      applicationsCount: candidate._count.applications,
+      profileCompletion: this.calculateProfileCompletion(candidate),
+    };
   }
 
   async updateMe(user: AuthUser, dto: UpdateCandidateDto) {
@@ -52,14 +60,25 @@ export class CandidatesService {
       await this.validateJobPreferences(dto.jobPreferences);
     }
 
+    const normalizedPhone = this.normalizePhone(dto.phone);
+    const birthDate = dto.birthDate ? new Date(dto.birthDate) : undefined;
+    const normalizedSecondaryPhone =
+      dto.secondaryPhone === undefined
+        ? undefined
+        : dto.secondaryPhone.trim() === ''
+        ? null
+        : this.normalizePhone(dto.secondaryPhone);
+
     const candidateData = {
       fullName: dto.fullName,
-      age: dto.age,
+      ...(birthDate ? { birthDate, age: this.calculateAge(birthDate) } : { age: dto.age }),
       department: dto.department,
+      municipality: dto.municipality,
+      zone: dto.zone,
       neighborhood: dto.neighborhood,
       city: dto.department ?? dto.city,
       country: dto.country,
-      phone: dto.phone,
+      phone: normalizedPhone,
       desiredJobType:
         dto.jobPreferences === undefined
           ? dto.desiredJobType
@@ -74,9 +93,9 @@ export class CandidatesService {
 
     const userData = {
       ...(dto.email != null ? { email: dto.email } : {}),
-      ...(dto.phone != null ? { phone: dto.phone } : {}),
+      ...(normalizedPhone != null ? { phone: normalizedPhone } : {}),
       ...(dto.secondaryPhone !== undefined
-        ? { secondaryPhone: dto.secondaryPhone }
+        ? { secondaryPhone: normalizedSecondaryPhone }
         : {}),
     };
 
@@ -126,9 +145,61 @@ export class CandidatesService {
               secondaryPhone: true,
             },
           },
+          _count: { select: { applications: true, documents: true } },
         },
       });
     });
+  }
+
+  private calculateProfileCompletion(candidate: {
+    fullName: string;
+    phone: string | null;
+    city: string | null;
+    availability: string | null;
+    educationLevel: string | null;
+    experienceLevel: string | null;
+    salaryExpectationMin: number | null;
+    salaryExpectationMax: number | null;
+    photoUrl: string | null;
+    jobPreferences?: unknown[];
+    _count?: { documents: number };
+  }) {
+    const complete = [
+      Boolean(candidate.fullName?.trim()),
+      Boolean(candidate.phone?.trim()),
+      Boolean(candidate.city?.trim()),
+      Boolean(candidate.jobPreferences?.length),
+      Boolean(candidate.availability?.trim()),
+      Boolean(candidate.educationLevel?.trim()),
+      Boolean(candidate.experienceLevel?.trim()),
+      candidate.salaryExpectationMin != null || candidate.salaryExpectationMax != null,
+      Boolean(candidate.photoUrl?.trim()),
+      (candidate._count?.documents ?? 0) > 0,
+    ].filter(Boolean).length;
+    return complete * 10;
+  }
+
+  private normalizePhone(value?: string) {
+    if (!value) return undefined;
+    const digits = value.replace(/\D/g, '');
+    const local = digits.startsWith('505') ? digits.slice(3) : digits;
+    if (!/^\d{8}$/.test(local)) {
+      throw new BadRequestException('El teléfono debe tener 8 dígitos de Nicaragua.');
+    }
+    return `+505${local}`;
+  }
+
+  private calculateAge(birthDate: Date) {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    if (
+      today.getMonth() < birthDate.getMonth() ||
+      (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())
+    ) age--;
+    if (age < 18) {
+      throw new BadRequestException('Debes ser mayor de edad para usar la plataforma como candidato.');
+    }
+    return age;
   }
 
   private async validateJobPreferences(

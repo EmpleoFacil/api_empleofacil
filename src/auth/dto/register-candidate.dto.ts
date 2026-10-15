@@ -5,6 +5,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsDateString,
   IsEmail,
   IsIn,
   IsInt,
@@ -38,13 +39,26 @@ export class RegisterCandidateDto {
   @IsNotEmpty()
   password: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Max(120)
-  age: number;
+  age?: number;
+
+  @IsDateString()
+  birthDate: string;
 
   @IsIn(NICARAGUA_DEPARTMENTS)
   department: string;
+
+  @IsOptional()
+  @IsString()
+  municipality?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  zone?: string;
 
   @IsOptional()
   @IsString()
@@ -58,6 +72,20 @@ export class RegisterCandidateDto {
   @IsOptional()
   @IsString()
   desiredJobType?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  salaryExpectationMin?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  salaryExpectationMax?: number;
+
+  @IsOptional()
+  @IsString()
+  experienceLevel?: string;
 
   @IsArray()
   @ArrayMinSize(1)

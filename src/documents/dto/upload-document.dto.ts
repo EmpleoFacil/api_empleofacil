@@ -10,4 +10,9 @@ export class UploadDocumentDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   replace?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  primary?: boolean;
 }

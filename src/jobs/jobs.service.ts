@@ -3,10 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/types/auth-user';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
+import { SupabaseStorageService } from '../supabase/supabase-storage.service';
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: SupabaseStorageService,
+  ) {}
 
   getCategories() {
     return this.prisma.jobCategory.findMany({
@@ -28,17 +32,33 @@ export class JobsService {
     });
   }
 
-  async getRecommended(user: AuthUser, categoryId?: string, specialtyId?: string) {
-    await this.closeExpiredJobs();
+  async getRecommended(
+    user: AuthUser,
+    categoryId?: string,
+    specialtyId?: string,
+    query?: string,
+  ) {
+    const searchFilter = query?.trim()
+      ? {
+          OR: [
+            { title: { contains: query.trim(), mode: 'insensitive' as const } },
+            { description: { contains: query.trim(), mode: 'insensitive' as const } },
+            { company: { name: { contains: query.trim(), mode: 'insensitive' as const } } },
+          ],
+        }
+      : null;
 
     if (!user.candidateId) {
       return this.prisma.job.findMany({
         where: {
-          status: 'active',
-          ...(categoryId && { categoryId }),
-          ...(specialtyId && {
-            specialtySelections: { some: { specialtyId } },
-          }),
+          AND: [
+            this.buildPublicActiveWhere(),
+            ...(searchFilter ? [searchFilter] : []),
+            ...(categoryId ? [{ categoryId }] : []),
+            ...(specialtyId
+              ? [{ specialtySelections: { some: { specialtyId } } }]
+              : []),
+          ],
         },
         include: {
           company: { select: { id: true, name: true, logoUrl: true } },
@@ -86,14 +106,19 @@ export class JobsService {
 
     const jobs = await this.prisma.job.findMany({
       where: {
-        status: 'active',
-        ...(categoryId && { categoryId }),
-        ...(specialtyId && {
-          specialtySelections: { some: { specialtyId } },
-        }),
-        ...(preferences.length > 0 && {
-          OR: preferenceMatches,
-        }),
+        AND: [
+          this.buildPublicActiveWhere(),
+          ...(searchFilter ? [searchFilter] : []),
+          ...(categoryId ? [{ categoryId }] : []),
+          ...(specialtyId
+            ? [{ specialtySelections: { some: { specialtyId } } }]
+            : []),
+          // An explicit category/specialty filter is an intentional
+          // exploration override; the default feed remains preference-based.
+          ...(preferences.length > 0 && !categoryId && !specialtyId
+            ? [{ OR: preferenceMatches }]
+            : []),
+        ],
       },
       include: {
         company: { select: { id: true, name: true, logoUrl: true } },
@@ -129,8 +154,6 @@ export class JobsService {
     page = 1,
     limit = 20,
   ) {
-    await this.closeExpiredJobs();
-
     const skip = (page - 1) * limit;
     const where: any = {
       ...this.buildPublicActiveWhere(),
@@ -407,11 +430,20 @@ export class JobsService {
         requirements: dto.requirements ?? [],
         benefits: dto.benefits ?? [],
         city: dto.city,
+        department: dto.department,
+        municipality: dto.municipality,
+        zone: dto.zone,
         country: dto.country,
         salaryMin: dto.salaryMin,
         salaryMax: dto.salaryMax,
         employmentType: dto.employmentType,
         modality: dto.modality,
+        workSchedule: dto.workSchedule,
+        additionalInfo: dto.additionalInfo,
+        contactEmail: dto.contactEmail,
+        contactPhone: dto.contactPhone,
+        showContactInfo: dto.showContactInfo ?? false,
+        logoUrl: dto.logoUrl,
         status: (dto.status ?? 'active') as any,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         specialtySelections: {
@@ -425,6 +457,28 @@ export class JobsService {
         specialtySelections: { include: { specialty: true } },
       },
     });
+  }
+
+  async uploadLogo(id: string, user: AuthUser, file?: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Selecciona una imagen para la vacante.');
+    if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      throw new BadRequestException('El logo debe ser JPG, PNG o WEBP.');
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      throw new BadRequestException('La imagen no puede superar 2 MB.');
+    }
+
+    const job = await this.prisma.job.findUnique({ where: { id } });
+    if (!job) throw new NotFoundException('Vacante no encontrada.');
+    if (user.role === 'company_admin' && user.companyId !== job.companyId) {
+      throw new ForbiddenException('No tienes acceso a esta vacante.');
+    }
+
+    const extension = file.mimetype === 'image/png'
+      ? 'png'
+      : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
+    const logoUrl = await this.storage.upload(file, `${id}.${extension}`, 'jobs');
+    return this.prisma.job.update({ where: { id }, data: { logoUrl } });
   }
 
   async update(id: string, user: AuthUser, dto: UpdateJobDto) {
@@ -472,11 +526,20 @@ export class JobsService {
         requirements: dto.requirements,
         benefits: dto.benefits,
         city: dto.city,
+        department: dto.department,
+        municipality: dto.municipality,
+        zone: dto.zone,
         country: dto.country,
         salaryMin: dto.salaryMin,
         salaryMax: dto.salaryMax,
         employmentType: dto.employmentType,
         modality: dto.modality,
+        workSchedule: dto.workSchedule,
+        additionalInfo: dto.additionalInfo,
+        contactEmail: dto.contactEmail,
+        contactPhone: dto.contactPhone,
+        showContactInfo: dto.showContactInfo,
+        logoUrl: dto.logoUrl,
         status: dto.status as any,
         expiresAt: dto.expiresAt === undefined ? undefined : dto.expiresAt ? new Date(dto.expiresAt) : null,
         ...(dto.specialtyIds !== undefined || categoryChanged

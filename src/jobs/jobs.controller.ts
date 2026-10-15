@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -27,8 +28,9 @@ export class JobsController {
     @CurrentUser() user: AuthUser,
     @Query('category') categoryId?: string,
     @Query('specialty') specialtyId?: string,
+    @Query('search') query?: string,
   ) {
-    return this.jobsService.getRecommended(user, categoryId, specialtyId);
+    return this.jobsService.getRecommended(user, categoryId, specialtyId, query);
   }
 
   @Get('search')
@@ -91,6 +93,15 @@ export class JobsController {
     @Query('limit') limit?: string,
   ) {
     return this.jobsService.getAdminJobs(query, companyId, status, page ? parseInt(page) : 1, limit ? parseInt(limit) : 10);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Post(':id/logo')
+  @UseInterceptors(FileInterceptor('file'))
+  @Roles('company_admin', 'super_admin')
+  uploadLogo(@Param('id') id: string, @CurrentUser() user: AuthUser, @UploadedFile() file?: Express.Multer.File) {
+    return this.jobsService.uploadLogo(id, user, file);
   }
 
   @ApiBearerAuth()

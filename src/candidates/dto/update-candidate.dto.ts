@@ -6,6 +6,7 @@ import {
   ArrayUnique,
   IsArray,
   IsEmail,
+  IsDateString,
   IsIn,
   IsInt,
   IsOptional,
@@ -32,8 +33,21 @@ export class UpdateCandidateDto {
   age?: number;
 
   @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  @IsOptional()
   @IsIn(NICARAGUA_DEPARTMENTS)
   department?: string;
+
+  @IsOptional()
+  @IsString()
+  municipality?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  zone?: string;
 
   @IsOptional()
   @IsString()

@@ -39,6 +39,18 @@ export class CreateJobDto {
 
   @IsOptional()
   @IsString()
+  department?: string;
+
+  @IsOptional()
+  @IsString()
+  municipality?: string;
+
+  @IsOptional()
+  @IsString()
+  zone?: string;
+
+  @IsOptional()
+  @IsString()
   country?: string;
 
   @IsOptional()
@@ -58,6 +70,29 @@ export class CreateJobDto {
   @IsOptional()
   @IsString()
   modality?: string;
+
+  @IsOptional()
+  @IsString()
+  workSchedule?: string;
+
+  @IsOptional()
+  @IsString()
+  additionalInfo?: string;
+
+  @IsOptional()
+  @IsString()
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  showContactInfo?: boolean;
+
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
 
   @IsOptional()
   @IsString()

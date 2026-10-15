@@ -60,9 +60,53 @@ export class ApplicationsService {
     return this.prisma.application.findMany({
       where: { candidateId: user.candidateId },
       include: {
-        job: { include: { company: true } },
-        interviews: { orderBy: { date: 'asc' }, take: 1 },
-        messages: { orderBy: { createdAt: 'desc' }, take: 1 },
+        job: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            requirements: true,
+            benefits: true,
+            city: true,
+            country: true,
+            salaryMin: true,
+            salaryMax: true,
+            currency: true,
+            employmentType: true,
+            modality: true,
+            status: true,
+            categoryId: true,
+            company: { select: { id: true, name: true, logoUrl: true } },
+          },
+        },
+        interviews: {
+          where: {
+            date: { gte: new Date() },
+            status: { in: ['scheduled', 'pending_confirmation', 'confirmed', 'rescheduled'] },
+          },
+          select: {
+            id: true,
+            date: true,
+            modality: true,
+            location: true,
+            meetingUrl: true,
+            status: true,
+          },
+          orderBy: { date: 'asc' },
+          take: 1,
+        },
+        messages: {
+          select: {
+            id: true,
+            title: true,
+            body: true,
+            type: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
       },
       orderBy: { appliedAt: 'desc' },
     });

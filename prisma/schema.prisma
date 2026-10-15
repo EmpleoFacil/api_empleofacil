@@ -151,8 +151,11 @@ model CandidateProfile {
   userId               String   @unique
   fullName             String
   photoUrl             String?
+  birthDate            DateTime?
   age                  Int?
   department           String?
+  municipality         String?
+  zone                 String?
   neighborhood         String?
   city                 String?
   country              String?  @default("Nicaragua")
@@ -267,12 +270,21 @@ model Job {
   requirements   String[]
   benefits       String[]
   city           String?
+  department     String?
+  municipality   String?
+  zone           String?
   country        String?   @default("Nicaragua")
   salaryMin      Int?
   salaryMax      Int?
   currency       String    @default("NIO")
   employmentType String?
   modality       String?
+  workSchedule   String?
+  additionalInfo String?
+  contactEmail   String?
+  contactPhone   String?
+  showContactInfo Boolean  @default(false)
+  logoUrl        String?
   status         JobStatus @default(active)
   expiresAt      DateTime?
   createdAt      DateTime  @default(now())
@@ -391,6 +403,7 @@ model CandidateDocument {
   type        String
   fileUrl     String?
   status      DocumentStatus @default(pending)
+  isPrimary   Boolean        @default(false)
   uploadedAt  DateTime?
   reviewedAt  DateTime?
   reviewedBy  String?

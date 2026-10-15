@@ -64,6 +64,14 @@ export class DocumentsController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Patch(':id/primary')
+  @Roles('candidate')
+  setPrimary(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.documentsService.setPrimary(user, id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Patch(':id/status')
   @Roles('super_admin')
   updateStatus(@Param('id') id: string, @Body() dto: UpdateDocumentStatusDto) {

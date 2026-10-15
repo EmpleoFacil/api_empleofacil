@@ -24,7 +24,14 @@ export class AuthService {
   ) {}
 
   async registerCandidate(dto: RegisterCandidateDto) {
-    if (!dto.email && !dto.phone) {
+    const normalizedPhone = this.normalizePhone(dto.phone);
+    const birthDate = new Date(dto.birthDate);
+    const age = this.calculateAge(birthDate);
+    if (age < 18) {
+      throw new BadRequestException('Debes ser mayor de edad para crear una cuenta de candidato.');
+    }
+
+    if (!dto.email && !normalizedPhone) {
       throw new BadRequestException('Debes proporcionar email o teléfono.');
     }
 
@@ -34,7 +41,7 @@ export class AuthService {
       where: {
         OR: [
           { email: dto.email ?? '' },
-          { phone: dto.phone ?? '' },
+          { phone: normalizedPhone ?? '' },
           { secondaryPhone: dto.secondaryPhone ?? '' },
         ].filter((c) => Object.values(c).some(Boolean)) as any,
       },
@@ -49,21 +56,27 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
-        phone: dto.phone,
+        phone: normalizedPhone,
         secondaryPhone: dto.secondaryPhone,
         passwordHash,
         role: 'candidate' as any,
         candidateProfile: {
           create: {
             fullName: dto.fullName,
-            age: dto.age,
+            age,
+            birthDate,
             department: dto.department,
+            municipality: dto.municipality,
+            zone: dto.zone,
             neighborhood: dto.neighborhood,
             city: dto.department,
             country: 'Nicaragua',
-            phone: dto.phone,
+            phone: normalizedPhone,
             desiredJobType:
               dto.jobPreferences[0]?.categoryId ?? dto.desiredJobType,
+            salaryExpectationMin: dto.salaryExpectationMin,
+            salaryExpectationMax: dto.salaryExpectationMax,
+            experienceLevel: dto.experienceLevel,
             profileCompletion: 0,
             jobPreferences: {
               create: dto.jobPreferences.map((preference) => ({
@@ -132,9 +145,12 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    const identifier = dto.identifier.includes('@')
+      ? dto.identifier.trim().toLowerCase()
+      : this.normalizePhone(dto.identifier);
     const user = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: dto.identifier }, { phone: dto.identifier }],
+        OR: [{ email: identifier }, { phone: identifier }],
       },
       include: { candidateProfile: true, companyUsers: true },
     });
@@ -158,9 +174,12 @@ export class AuthService {
   }
 
   async recoverAccess(dto: RecoverAccessDto) {
+    const identifier = dto.identifier.includes('@')
+      ? dto.identifier.trim().toLowerCase()
+      : this.normalizePhone(dto.identifier);
     const user = await this.prisma.user.findFirst({
       where: {
-        OR: [{ email: dto.identifier }, { phone: dto.identifier }],
+        OR: [{ email: identifier }, { phone: identifier }],
       },
     });
 
@@ -290,6 +309,26 @@ export class AuthService {
         companyId,
       },
     };
+  }
+
+  private normalizePhone(value?: string) {
+    if (!value) return undefined;
+    const digits = value.replace(/\D/g, '');
+    const local = digits.startsWith('505') ? digits.slice(3) : digits;
+    if (!/^\d{8}$/.test(local)) {
+      throw new BadRequestException('El teléfono debe tener 8 dígitos de Nicaragua.');
+    }
+    return `+505${local}`;
+  }
+
+  private calculateAge(birthDate: Date) {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const birthdayNotReached =
+      today.getMonth() < birthDate.getMonth() ||
+      (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
+    if (birthdayNotReached) age--;
+    return age;
   }
 
   private async deliverRecoveryCode(
